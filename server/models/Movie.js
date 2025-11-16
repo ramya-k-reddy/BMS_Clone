@@ -120,8 +120,8 @@ const movieSchema = new mongoose.Schema({
 });
 
 // Index for better search performance
-movieSchema.index({ title: 'text', description: 'text' });
-movieSchema.index({ genre: 1, language: 1 });
+movieSchema.index({ title: 'text', description: 'text' }, { language_override: 'dummy' });
+movieSchema.index({ genre: 1 });
 movieSchema.index({ releaseDate: -1 });
 movieSchema.index({ status: 1 });
 

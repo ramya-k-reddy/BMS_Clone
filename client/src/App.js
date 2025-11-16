@@ -12,6 +12,7 @@ import { SocketProvider } from './context/SocketContext';
 // Components
 import Navbar from './components/layout/Navbar';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
 // Pages
@@ -29,6 +30,9 @@ import NotFound from './pages/NotFound';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminMovies from './pages/AdminMovies';
 import AdminTheaters from './pages/AdminTheaters';
+import AdminShows from './pages/AdminShows';
+import AdminAddMovie from './pages/AdminAddMovie';
+import AdminAddTheater from './pages/AdminAddTheater';
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -109,9 +113,36 @@ function AppContent() {
               } />
               
               {/* Admin Routes - Require Admin Role */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/movies" element={<AdminMovies />} />
-              <Route path="/admin/theaters" element={<AdminTheaters />} />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              <Route path="/admin/movies" element={
+                <AdminRoute>
+                  <AdminMovies />
+                </AdminRoute>
+              } />
+              <Route path="/admin/movies/add" element={
+                <AdminRoute>
+                  <AdminAddMovie />
+                </AdminRoute>
+              } />
+              <Route path="/admin/theaters" element={
+                <AdminRoute>
+                  <AdminTheaters />
+                </AdminRoute>
+              } />
+              <Route path="/admin/theaters/add" element={
+                <AdminRoute>
+                  <AdminAddTheater />
+                </AdminRoute>
+              } />
+              <Route path="/admin/shows" element={
+                <AdminRoute>
+                  <AdminShows />
+                </AdminRoute>
+              } />
               
               {/* 404 Page */}
               <Route path="/404" element={<NotFound />} />

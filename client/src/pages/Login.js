@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../store/slices/authSlice';
-import { selectAuthLoading, selectAuthError } from '../store/slices/authSlice';
+import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin } from '../store/slices/authSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import '../styles/Login.css';
 
@@ -12,13 +12,28 @@ const Login = () => {
   const location = useLocation();
   const loading = useSelector(selectAuthLoading);
   const error = useSelector(selectAuthError);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
 
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || null;
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      } else if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/movies', { replace: true });
+      }
+    }
+  }, [isAuthenticated, isAdmin, from, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -32,7 +47,19 @@ const Login = () => {
     const result = await dispatch(loginUser(formData));
     
     if (loginUser.fulfilled.match(result)) {
-      navigate(from, { replace: true });
+      const user = result.payload.user;
+      
+      // If there's a return URL and it's not the home page, use it
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      } else {
+        // Redirect based on user role
+        if (user.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/movies', { replace: true });
+        }
+      }
     }
   };
 
@@ -40,13 +67,6 @@ const Login = () => {
     <div className="login-container flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="login-card max-w-md w-full p-8">
         <div>
-          <div className="flex justify-center">
-            <div className="login-logo">
-              <div className="logo-icon">
-                <span className="text-white font-bold text-xl">BMS</span>
-              </div>
-            </div>
-          </div>
           <h2 className="login-title">
             Welcome Back
           </h2>

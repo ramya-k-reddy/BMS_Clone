@@ -38,27 +38,6 @@ const AdminDashboard = () => {
             </div>
             
             <AdminStats />
-            
-            {/* Quick Actions */}
-            <div className="admin-table-section">
-              <div className="table-header">
-                <h2 className="table-title">Quick Actions</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="/admin/movies/new" className="btn-primary text-center">
-                  🎬 Add New Movie
-                </a>
-                <a href="/admin/theaters/new" className="btn-primary text-center">
-                  🎭 Add New Theater
-                </a>
-                <a href="/admin/shows/new" className="btn-primary text-center">
-                  🎟️ Add New Show
-                </a>
-                <a href="/admin/users" className="btn-secondary text-center">
-                  👥 Manage Users
-                </a>
-              </div>
-            </div>
 
             {/* Recent Activity */}
             <div className="admin-table-section">

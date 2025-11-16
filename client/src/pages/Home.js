@@ -1,8 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectIsAuthenticated, selectIsAdmin } from '../store/slices/authSlice';
 import '../styles/Home.css';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
+
+  useEffect(() => {
+    // Redirect authenticated users to their respective dashboards
+    if (isAuthenticated) {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/movies', { replace: true });
+      }
+    }
+  }, [isAuthenticated, isAdmin, navigate]);
 
   return (
     <div className="home-container">

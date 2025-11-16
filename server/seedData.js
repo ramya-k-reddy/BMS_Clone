@@ -248,14 +248,17 @@ async function seedDatabase() {
 
     // Create demo shows
     const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+    
     const demoShows = [];
     
     movies.forEach((movie, index) => {
-      // Create shows for today and tomorrow
-      [today, tomorrow].forEach(date => {
+      // Create shows for next 7 days
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const showDate = new Date(today);
+        showDate.setDate(today.getDate() + dayOffset);
+        
+        // Create 4 shows per day (morning, afternoon, evening, night)
         ['10:00', '14:30', '18:00', '21:30'].forEach((time, timeIndex) => {
           const screen = theater.screens[timeIndex % 2]; // Alternate between screens
           
@@ -266,7 +269,7 @@ async function seedDatabase() {
               screenNumber: screen.screenNumber,
               name: screen.name
             },
-            showDate: new Date(date),
+            showDate: new Date(showDate),
             showTime: time,
             language: movie.language[0], // Use first language
             format: movie.format[0], // Use first format
@@ -276,13 +279,18 @@ async function seedDatabase() {
             })),
             seats: {
               total: screen.capacity,
-              available: screen.capacity,
+              available: screen.capacity - (screen.seatLayout.blockedSeats?.length || 0),
               booked: [],
-              blocked: screen.seatLayout.blockedSeats || []
+              blocked: (screen.seatLayout.blockedSeats || []).map(seat => ({
+                seatId: `${seat.row}${seat.seatNumber}`,
+                row: seat.row,
+                seatNumber: seat.seatNumber,
+                reason: 'Maintenance'
+              }))
             }
           });
         });
-      });
+      }
     });
 
     const shows = await Show.insertMany(demoShows);

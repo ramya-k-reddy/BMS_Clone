@@ -121,11 +121,20 @@ code {
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  width: 100%;
+  min-height: 64px;
+}
+
+.nav-container > div {
+  flex-wrap: nowrap !important;
 }
 
 .navbar-logo {
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .navbar-logo::before {
@@ -147,6 +156,10 @@ code {
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-link::after {
@@ -163,7 +176,7 @@ code {
 
 .nav-link:hover::after,
 .nav-link.active::after {
-  width: 100%;
+  width: 80%;
 }
 
 .nav-link:hover {
@@ -176,6 +189,9 @@ code {
   background: linear-gradient(45deg, #ef4444, #f97316, #ef4444);
   background-size: 300% 300%;
   animation: gradientShift 3s ease infinite;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-btn::before {
@@ -208,6 +224,8 @@ code {
 /* Navbar responsive animations */
 .nav-container {
   animation: slideDown 0.5s ease-out;
+  width: 100%;
+  display: flex;
 }
 
 @keyframes slideDown {
@@ -224,16 +242,31 @@ code {
 /* Mobile navbar improvements */
 @media (max-width: 768px) {
   .navbar {
-    padding: 0 1rem;
+    padding: 0 0.5rem;
+  }
+  
+  .navbar-logo span {
+    font-size: 1.25rem;
   }
   
   .nav-link {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
+    padding: 0.5rem 0.5rem !important;
+    font-size: 0.8rem;
   }
   
   .login-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar-logo span {
+    font-size: 1.1rem;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.4rem !important;
+    font-size: 0.75rem;
   }
 }

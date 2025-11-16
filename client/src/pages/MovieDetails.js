@@ -1,206 +1,281 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchMovieById } from '../store/slices/moviesSlice';
+import { useSelector } from 'react-redux';
+import { selectIsAuthenticated } from '../store/slices/authSlice';
+import axios from 'axios';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import '../styles/MovieDetails.css';
 
 const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   
-  const { currentMovie, loading: movieLoading } = useSelector((state) => state.movies);
-  const { user } = useSelector((state) => state.auth);
+  const [movie, setMovie] = useState(null);
+  const [shows, setShows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const fetchMovieAndShows = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [movieRes, showsRes] = await Promise.all([
+        axios.get(`/api/movies/${id}`),
+        axios.get(`/api/shows/movie/${id}`)
+      ]);
+      
+      setMovie(movieRes.data.data);
+      setShows(showsRes.data.data || []);
+      
+      // Set first available date as selected
+      if (showsRes.data.data && showsRes.data.data.length > 0) {
+        const dates = getUniqueDates(showsRes.data.data);
+        setSelectedDate(dates[0]);
+      }
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching movie details:', err);
+      setError('Failed to load movie details');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchMovieById(id));
-    }
-  }, [dispatch, id]);
+    fetchMovieAndShows();
+  }, [fetchMovieAndShows]);
 
-  const handleBookNow = () => {
-    if (!user) {
+  const getUniqueDates = (showsArray) => {
+    if (!Array.isArray(showsArray) || showsArray.length === 0) {
+      return [];
+    }
+    const dates = [...new Set(showsArray.map(show => 
+      new Date(show.showDate).toDateString()
+    ))];
+    return dates.sort((a, b) => new Date(a) - new Date(b));
+  };
+
+  const getShowsForDate = (date) => {
+    if (!Array.isArray(shows)) {
+      return [];
+    }
+    return shows.filter(show => 
+      new Date(show.showDate).toDateString() === date
+    );
+  };
+
+  const groupShowsByTheater = (showsArray) => {
+    if (!Array.isArray(showsArray)) {
+      return {};
+    }
+    const grouped = {};
+    showsArray.forEach(show => {
+      const theaterName = show.theater?.name || 'Unknown Theater';
+      if (!grouped[theaterName]) {
+        grouped[theaterName] = {
+          theater: show.theater,
+          shows: []
+        };
+      }
+      grouped[theaterName].shows.push(show);
+    });
+    return grouped;
+  };
+
+  const handleShowSelect = (showId) => {
+    if (!isAuthenticated) {
       navigate('/login', { state: { from: `/movie/${id}` } });
       return;
     }
-    // For simple demo, just show alert
-    alert('Booking functionality will be implemented soon!');
+    navigate(`/movie/${id}/book/${showId}`);
   };
 
-  // Sample show times for demo
-  const sampleShowTimes = [
-    '10:00 AM', '1:00 PM', '4:00 PM', '7:00 PM', '10:00 PM'
-  ];
+  const formatDuration = (minutes) => {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hrs}h ${mins}m`;
+  };
 
-  const sampleTheaters = [
-    'PVR Cinemas',
-    'INOX Movies',
-    'Cinepolis',
-    'MovieMax'
-  ];
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (movieLoading) {
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="movie-details-loading">
         <LoadingSpinner size="large" />
       </div>
     );
   }
 
-  if (!currentMovie) {
+  if (error || !movie) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Movie Not Found</h2>
-          <p className="text-gray-600">The movie you're looking for doesn't exist.</p>
+      <div className="movie-details-error">
+        <div className="error-content">
+          <h2>Movie Not Found</h2>
+          <p>{error || "The movie you're looking for doesn't exist."}</p>
+          <button onClick={() => navigate('/movies')} className="back-button">
+            Back to Movies
+          </button>
         </div>
       </div>
     );
   }
 
+  const uniqueDates = getUniqueDates(shows);
+  const selectedDateShows = selectedDate ? getShowsForDate(selectedDate) : [];
+  const groupedShows = groupShowsByTheater(selectedDateShows);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Movie Header */}
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Movie Poster */}
-            <div className="lg:col-span-1">
-              <div className="aspect-w-2 aspect-h-3 rounded-lg overflow-hidden shadow-lg">
-                <img
-                  src={currentMovie.poster || '/api/placeholder/400/600'}
-                  alt={currentMovie.title}
-                  className="w-full h-96 object-cover"
-                />
-              </div>
+    <div className="movie-details-container">
+      {/* Movie Banner */}
+      <div className="movie-banner">
+        <div className="banner-overlay"></div>
+        <img src={movie.poster} alt={movie.title} className="banner-image" />
+        <div className="banner-content">
+          <div className="banner-info">
+            <h1 className="movie-title">{movie.title}</h1>
+            <div className="movie-meta">
+              <span className="rating">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                {movie.rating?.imdb || 'N/A'}/10
+              </span>
+              <span>•</span>
+              <span>{formatDuration(movie.duration)}</span>
+              <span>•</span>
+              <span>{movie.certification}</span>
+              <span>•</span>
+              <span>{movie.genre?.join(', ')}</span>
             </div>
-
-            {/* Movie Info */}
-            <div className="lg:col-span-2">
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                    {currentMovie.title}
-                  </h1>
-                  <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center space-x-1">
-                      <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                      <span className="font-medium">
-                        {currentMovie.rating ? currentMovie.rating.toFixed(1) : 'N/A'}/5
-                      </span>
-                    </div>
-                    <span>•</span>
-                    <span>{currentMovie.duration} mins</span>
-                    <span>•</span>
-                    <span>{currentMovie.genre?.join(', ')}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {currentMovie.language?.map((lang, index) => (
-                      <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                        {lang}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">About the Movie</h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {currentMovie.description || 'No description available.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-900">Director:</span>
-                    <p className="text-gray-600">{currentMovie.director || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900">Release Date:</span>
-                    <p className="text-gray-600">
-                      {currentMovie.releaseDate 
-                        ? new Date(currentMovie.releaseDate).toLocaleDateString()
-                        : 'N/A'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900">Cast:</span>
-                    <p className="text-gray-600">{currentMovie.cast?.join(', ') || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900">Certificate:</span>
-                    <p className="text-gray-600">{currentMovie.certificate || 'N/A'}</p>
-                  </div>
-                </div>
-
-                {/* Simple Book Now Button */}
-                <div className="pt-4">
-                  <button
-                    onClick={handleBookNow}
-                    className="bg-red-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors"
-                  >
-                    Book Tickets
-                  </button>
-                </div>
-              </div>
+            <div className="movie-languages">
+              {movie.language?.map((lang, index) => (
+                <span key={index} className="language-badge">{lang}</span>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Simple Show Times Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Show Times</h2>
-          
-          {/* Show times for different theaters */}
-          <div className="space-y-6">
-            {sampleTheaters.map((theater, theaterIndex) => (
-              <div key={theaterIndex} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">{theater}</h4>
-                    <p className="text-sm text-gray-600">Sample Theater Address</p>
-                  </div>
-                  <div className="text-right text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                      <span>Mobile Ticket</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  {sampleShowTimes.map((time, timeIndex) => (
-                    <button
-                      key={timeIndex}
-                      onClick={handleBookNow}
-                      className="border border-green-500 text-green-600 hover:bg-green-50 px-4 py-2 rounded text-sm font-medium transition-colors"
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Simple info message */}
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <p className="text-blue-700 text-sm">
-                This is a demo project. Show times and theaters are sample data for demonstration purposes.
-              </p>
+      {/* Movie Description */}
+      <div className="movie-description-section">
+        <div className="description-container">
+          <h2>About the Movie</h2>
+          <p>{movie.description}</p>
+          <div className="movie-details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Director</span>
+              <span className="detail-value">{movie.director}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Release Date</span>
+              <span className="detail-value">
+                {new Date(movie.releaseDate).toLocaleDateString('en-US', { 
+                  year: 'numeric', month: 'long', day: 'numeric' 
+                })}
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Cast</span>
+              <span className="detail-value">
+                {movie.cast?.slice(0, 3).map(c => c.name).join(', ') || 'N/A'}
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Formats</span>
+              <span className="detail-value">{movie.format?.join(', ')}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Shows Section */}
+      <div className="shows-section">
+        <div className="shows-container">
+          <h2 className="shows-title">Select Date & Show Time</h2>
+          
+          {shows.length === 0 ? (
+            <div className="no-shows">
+              <p>No shows available for this movie at the moment.</p>
+              <button onClick={() => navigate('/movies')} className="back-to-movies-btn">
+                Browse Other Movies
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Date Selection */}
+              <div className="date-selection">
+                {uniqueDates.map((date, index) => (
+                  <button
+                    key={index}
+                    className={`date-btn ${selectedDate === date ? 'active' : ''}`}
+                    onClick={() => setSelectedDate(date)}
+                  >
+                    <span className="date-label">{formatDate(date)}</span>
+                    <span className="date-value">
+                      {new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Theater Shows */}
+              <div className="theaters-list">
+                {Object.keys(groupedShows).length === 0 ? (
+                  <p className="no-shows-message">No shows available for this date.</p>
+                ) : (
+                  Object.entries(groupedShows).map(([theaterName, data]) => (
+                    <div key={theaterName} className="theater-card">
+                      <div className="theater-info">
+                        <h3 className="theater-name">{theaterName}</h3>
+                        <p className="theater-address">
+                          {data.theater?.address?.street}, {data.theater?.address?.city}
+                        </p>
+                        <div className="theater-amenities">
+                          {data.theater?.amenities?.slice(0, 3).map((amenity, idx) => (
+                            <span key={idx} className="amenity-badge">{amenity}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="show-times">
+                        {data.shows.map((show) => (
+                          <button
+                            key={show._id}
+                            className="show-time-btn"
+                            onClick={() => handleShowSelect(show._id)}
+                            disabled={show.seats?.available === 0}
+                          >
+                            <span className="show-time">{show.showTime}</span>
+                            <span className="show-format">{show.format}</span>
+                            <span className="show-language">{show.language}</span>
+                            <span className="seats-available">
+                              {show.seats?.available > 0 
+                                ? `${show.seats.available} seats` 
+                                : 'Sold Out'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

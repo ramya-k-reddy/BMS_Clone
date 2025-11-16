@@ -129,7 +129,7 @@ const AdminMovies = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="form-input w-64"
                   />
-                  <Link to="/admin/movies/new" className="btn-primary">
+                  <Link to="/admin/movies/add" className="btn-primary">
                     ➕ Add New Movie
                   </Link>
                 </div>

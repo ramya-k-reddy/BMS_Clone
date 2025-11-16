@@ -1,0 +1,464 @@
+/* Movie Details Styles */
+
+.movie-details-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0c0c0c 100%);
+}
+
+.movie-details-loading,
+.movie-details-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0c0c0c 100%);
+}
+
+.error-content {
+  text-align: center;
+  color: #ffffff;
+}
+
+.error-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.error-content p {
+  font-size: 1rem;
+  color: #9ca3af;
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Movie Banner */
+.movie-banner {
+  position: relative;
+  height: 500px;
+  overflow: hidden;
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.4);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(12, 12, 12, 1) 100%);
+}
+
+.banner-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 3rem 2rem;
+}
+
+.banner-info {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.movie-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.movie-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #e5e7eb;
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.movie-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.language-badge {
+  padding: 0.375rem 0.875rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Movie Description Section */
+.movie-description-section {
+  padding: 3rem 2rem;
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+.description-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.description-container h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.description-container p {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #d1d5db;
+  margin-bottom: 2rem;
+}
+
+.movie-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Shows Section */
+.shows-section {
+  padding: 3rem 2rem;
+}
+
+.shows-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.shows-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2rem;
+}
+
+.no-shows {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.no-shows p {
+  font-size: 1.25rem;
+  color: #9ca3af;
+  margin-bottom: 2rem;
+}
+
+.back-to-movies-btn {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-to-movies-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Date Selection */
+.date-selection {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  scrollbar-width: thin;
+  scrollbar-color: #ef4444 rgba(31, 41, 55, 0.3);
+}
+
+.date-selection::-webkit-scrollbar {
+  height: 8px;
+}
+
+.date-selection::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.3);
+  border-radius: 10px;
+}
+
+.date-selection::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 10px;
+}
+
+.date-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(31, 41, 55, 0.6);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  border-radius: 12px;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.date-btn:hover {
+  background: rgba(31, 41, 55, 0.9);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.date-btn.active {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.date-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.date-value {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Theaters List */
+.theaters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.no-shows-message {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.125rem;
+  color: #9ca3af;
+}
+
+.theater-card {
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.theater-info {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.theater-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.theater-address {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-bottom: 0.75rem;
+}
+
+.theater-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.amenity-badge {
+  padding: 0.25rem 0.625rem;
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 6px;
+  color: #d1d5db;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Show Times */
+.show-times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.show-time-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem;
+  background: rgba(31, 41, 55, 0.6);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.show-time-btn:hover:not(:disabled) {
+  background: rgba(31, 41, 55, 0.9);
+  border-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.show-time-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.show-time {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.show-format,
+.show-language {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.seats-available {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.show-time-btn:disabled .seats-available {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .movie-title {
+    font-size: 2.5rem;
+  }
+
+  .show-times {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .movie-banner {
+    height: 400px;
+  }
+
+  .movie-title {
+    font-size: 2rem;
+  }
+
+  .movie-meta {
+    font-size: 0.875rem;
+  }
+
+  .banner-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .movie-description-section,
+  .shows-section {
+    padding: 2rem 1.5rem;
+  }
+
+  .movie-details-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .theater-card {
+    padding: 1.5rem;
+  }
+
+  .show-times {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-banner {
+    height: 300px;
+  }
+
+  .movie-title {
+    font-size: 1.5rem;
+  }
+
+  .shows-title {
+    font-size: 1.5rem;
+  }
+
+  .date-btn {
+    padding: 0.75rem 1rem;
+  }
+
+  .show-times {
+    grid-template-columns: 1fr;
+  }
+}

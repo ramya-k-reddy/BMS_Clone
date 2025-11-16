@@ -153,7 +153,7 @@ const AdminTheaters = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="form-input w-64"
                   />
-                  <Link to="/admin/theaters/new" className="btn-primary">
+                  <Link to="/admin/theaters/add" className="btn-primary">
                     ➕ Add New Theater
                   </Link>
                 </div>
@@ -165,7 +165,7 @@ const AdminTheaters = () => {
                   <p className="text-gray-400">Loading theaters...</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="table-container">
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -183,23 +183,23 @@ const AdminTheaters = () => {
                     <tbody>
                       {filteredTheaters.map((theater) => (
                         <tr key={theater._id}>
-                          <td className="font-semibold">{theater.name}</td>
+                          <td className="table-cell-bold">{theater.name}</td>
                           <td>{theater.location}</td>
                           <td className="text-center">{theater.screens}</td>
                           <td className="text-center">{theater.capacity}</td>
                           <td>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="facilities-container">
                               {theater.facilities.map((facility, index) => (
-                                <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                <span key={index} className="facility-badge">
                                   {facility}
                                 </span>
                               ))}
                             </div>
                           </td>
                           <td>
-                            <div>
-                              <div className="font-medium">{theater.owner.name}</div>
-                              <div className="text-sm text-gray-400">{theater.owner.email}</div>
+                            <div className="owner-info">
+                              <div className="owner-name">{theater.owner.name}</div>
+                              <div className="owner-email">{theater.owner.email}</div>
                             </div>
                           </td>
                           <td>
@@ -213,30 +213,30 @@ const AdminTheaters = () => {
                             </span>
                           </td>
                           <td>
-                            <div className="flex flex-wrap gap-1">
+                            <div className="action-buttons">
                               <Link 
                                 to={`/admin/theaters/edit/${theater._id}`}
-                                className="btn-secondary text-xs px-2 py-1"
+                                className="action-btn-edit"
                               >
                                 ✏️ Edit
                               </Link>
                               {!theater.isVerified && (
                                 <button 
                                   onClick={() => handleVerifyTheater(theater._id)}
-                                  className="btn-primary text-xs px-2 py-1"
+                                  className="action-btn-verify"
                                 >
                                   ✅ Verify
                                 </button>
                               )}
                               <button 
                                 onClick={() => handleToggleStatus(theater._id)}
-                                className="btn-secondary text-xs px-2 py-1"
+                                className="action-btn-toggle"
                               >
                                 {theater.status === 'active' ? '⏸️' : '▶️'}
                               </button>
                               <button 
                                 onClick={() => handleDeleteTheater(theater._id)}
-                                className="btn-danger text-xs px-2 py-1"
+                                className="action-btn-delete"
                               >
                                 🗑️
                               </button>
@@ -248,8 +248,8 @@ const AdminTheaters = () => {
                   </table>
                   
                   {filteredTheaters.length === 0 && !loading && (
-                    <div className="text-center py-8">
-                      <p className="text-gray-400">No theaters found</p>
+                    <div className="empty-state">
+                      <p>No theaters found</p>
                     </div>
                   )}
                 </div>

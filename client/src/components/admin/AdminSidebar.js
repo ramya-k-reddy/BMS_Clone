@@ -11,7 +11,6 @@ const AdminSidebar = ({ collapsed }) => {
       section: 'Overview',
       items: [
         { path: '/admin', label: 'Dashboard', icon: '📊' },
-        { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
       ]
     },
     {
@@ -21,35 +20,21 @@ const AdminSidebar = ({ collapsed }) => {
         { path: '/admin/theaters', label: 'Theaters', icon: '🎭' },
         { path: '/admin/shows', label: 'Shows', icon: '🎟️' },
       ]
-    },
-    {
-      section: 'User Management',
-      items: [
-        { path: '/admin/users', label: 'Users', icon: '👥' },
-        { path: '/admin/bookings', label: 'Bookings', icon: '📋' },
-        { path: '/admin/payments', label: 'Payments', icon: '💳' },
-      ]
-    },
-    {
-      section: 'Settings',
-      items: [
-        { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
-        { path: '/admin/reports', label: 'Reports', icon: '📄' },
-      ]
     }
   ];
 
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <div className="admin-logo">
-          BMS
+        <div className="sidebar-logo-container">
+          <div className="bms-logo">
+            <span className="logo-book">book</span>
+            <span className="logo-my">my</span>
+            <span className="logo-show">show</span>
+          </div>
         </div>
         {!collapsed && (
-          <>
-            <div className="admin-title">Admin Panel</div>
-            <div className="admin-subtitle">BookMyShow</div>
-          </>
+          <div className="admin-subtitle">Admin Panel</div>
         )}
       </div>
 

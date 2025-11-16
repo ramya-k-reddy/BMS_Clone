@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../store/slices/authSlice';
-import { selectAuthLoading, selectAuthError } from '../store/slices/authSlice';
+import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin } from '../store/slices/authSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import '../styles/Register.css';
 
@@ -11,16 +11,30 @@ const Register = () => {
   const navigate = useNavigate();
   const loading = useSelector(selectAuthLoading);
   const error = useSelector(selectAuthError);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '',
+    role: 'user'
   });
 
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (isAdmin) {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/movies', { replace: true });
+      }
+    }
+  }, [isAuthenticated, isAdmin, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -79,7 +93,14 @@ const Register = () => {
     const result = await dispatch(registerUser(userData));
     
     if (registerUser.fulfilled.match(result)) {
-      navigate('/');
+      const user = result.payload.user;
+      
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/movies', { replace: true });
+      }
     }
   };
 
@@ -87,13 +108,6 @@ const Register = () => {
     <div className="register-container flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="register-card max-w-md w-full p-8">
         <div>
-          <div className="flex justify-center">
-            <div className="register-logo">
-              <div className="logo-icon">
-                <span className="text-white font-bold text-xl">BMS</span>
-              </div>
-            </div>
-          </div>
           <h2 className="register-title">
             Join BookMyShow
           </h2>
@@ -177,6 +191,34 @@ const Register = () => {
               {validationErrors.phone && (
                 <p className="register-validation-error">{validationErrors.phone}</p>
               )}
+            </div>
+
+            <div className="register-form-group">
+              <label htmlFor="role" className="register-form-label">
+                Account Type
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="register-form-input"
+                style={{
+                  cursor: 'pointer',
+                  paddingRight: '2.5rem',
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.5rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.5em 1.5em',
+                  appearance: 'none'
+                }}
+              >
+                <option value="user">Normal User</option>
+                <option value="admin">Admin</option>
+              </select>
+              <p className="register-validation-error" style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                {formData.role === 'admin' ? '⚡ Admin accounts have full system access' : '👤 Standard user account for booking movies'}
+              </p>
             </div>
 
             <div className="register-form-group">

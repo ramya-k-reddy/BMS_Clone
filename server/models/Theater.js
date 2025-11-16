@@ -113,7 +113,7 @@ const theaterSchema = new mongoose.Schema({
     },
     amenities: [{
       type: String,
-      enum: ['AC', 'Recliner', 'Food Service', 'Parking', 'Wheelchair Accessible']
+      enum: ['AC', 'Recliner', 'Food Service', 'Parking', 'Wheelchair Accessible', '3D Capability', 'IMAX', 'Dolby Atmos', 'Premium Seating']
     }]
   }],
   amenities: [{
