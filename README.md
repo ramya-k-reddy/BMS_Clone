@@ -1,5 +1,102 @@
 # BookMyShow Clone
+# BMS (BookMyShow Clone)
 
+A full-stack movie ticket booking system inspired by BookMyShow, featuring user authentication, partner management, admin approval, movie and show management, seat selection, and payment integration.
+
+## Features
+- User registration and login
+- Partner registration with admin approval
+- Admin dashboard for managing movies, theaters, partners, and bookings
+- Partner dashboard for managing shows and theaters
+- Movie and show listing
+- Seat selection and booking
+- Payment integration
+- Booking history and confirmation
+
+## Project Structure
+```
+client/
+   package.json
+   public/
+      index.html
+      manifest.json
+   src/
+      App.js
+      index.css
+      index.js
+      assets/
+      components/
+         admin/
+         auth/
+         layout/
+         ui/
+      context/
+      hooks/
+      pages/
+      services/
+      store/
+         slices/
+      styles/
+      utils/
+server/
+   package.json
+   server.js
+   controllers/
+   middleware/
+   models/
+   routes/
+   services/
+   ...
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js
+- npm or yarn
+- MongoDB (local or cloud)
+
+### Installation
+1. Clone the repository:
+    ```
+    git clone https://github.com/ramya-k-reddy/BMS_Clone.git
+    ```
+2. Install dependencies for both client and server:
+    ```
+    cd bms/client
+    npm install
+    cd ../server
+    npm install
+    ```
+3. Set up environment variables in the server (e.g., MongoDB URI, JWT secret).
+4. Start the backend server:
+    ```
+    npm start
+    ```
+5. Start the frontend React app:
+    ```
+    cd ../client
+    npm start
+    ```
+
+## Usage
+- Register as a user or partner
+- Partners require admin approval before accessing their dashboard
+- Admin can approve partners and manage movies, theaters, and bookings
+- Book tickets, select seats, and make payments
+
+## Technologies Used
+- React, Redux, React Router
+- Node.js, Express
+- MongoDB, Mongoose
+- JWT Authentication
+- CSS Modules
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+This project is licensed under the MIT License.
 A comprehensive movie ticket booking platform built with React, Node.js, MongoDB, and Stripe.
 
 ## 🎬 Features
