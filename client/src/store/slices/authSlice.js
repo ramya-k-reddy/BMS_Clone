@@ -56,6 +56,21 @@ export const verifyToken = createAsyncThunk(
   }
 );
 
+export const silentVerifyToken = createAsyncThunk(
+  'auth/silentVerifyToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authAPI.verifyToken();
+      if (response.data.success) {
+        return response.data.data.user;
+      }
+    } catch (error) {
+      localStorage.removeItem('token');
+      return rejectWithValue('Token verification failed');
+    }
+  }
+);
+
 export const updateUserProfile = createAsyncThunk(
   'auth/updateUserProfile',
   async (profileData, { rejectWithValue }) => {
@@ -183,6 +198,18 @@ const authSlice = createSlice({
         state.isInitialized = true;
       })
       
+      // Silent verify token cases (no loading state)
+      .addCase(silentVerifyToken.fulfilled, (state, action) => {
+        state.isAuthenticated = true;
+        state.user = action.payload;
+      })
+      .addCase(silentVerifyToken.rejected, (state) => {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.isInitialized = true;
+      })
+      
       // Update profile cases
       .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
@@ -224,5 +251,8 @@ export const selectIsInitialized = (state) => state.auth.isInitialized;
 export const selectUserRole = (state) => state.auth.user?.role;
 export const selectIsAdmin = (state) => state.auth.user?.role === 'admin';
 export const selectIsTheaterOwner = (state) => state.auth.user?.role === 'theater-owner';
+export const selectIsPartner = (state) => state.auth.user?.role === 'partner';
+export const selectIsApprovedPartner = (state) => state.auth.user?.role === 'partner' && state.auth.user?.approved === true;
+export const selectIsPendingPartner = (state) => state.auth.user?.role === 'partner' && (state.auth.user?.approved === false || state.auth.user?.approved === undefined);
 
 export default authSlice.reducer;

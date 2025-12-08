@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 import { selectIsAdmin } from '../store/slices/authSlice';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -210,12 +211,38 @@ const AdminAddTheater = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add API call here
-    console.log('Theater data:', formData);
-    alert('Theater added successfully!');
-    navigate('/admin/theaters');
+    
+    try {
+      // Validation
+      if (!formData.name || !formData.address.city || !formData.contact.phone) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      if (formData.screens.length === 0) {
+        alert('Please add at least one screen');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post('/api/theaters', formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        alert('Theater added successfully!');
+        navigate('/admin/theaters', { state: { reload: true } });
+      }
+    } catch (error) {
+      console.error('Error adding theater:', error);
+      alert(error.response?.data?.message || 'Failed to add theater. Please try again.');
+    }
   };
 
   if (!isAdmin) {

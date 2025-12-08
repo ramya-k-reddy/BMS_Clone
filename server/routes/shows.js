@@ -3,7 +3,7 @@ const { body, query, validationResult } = require('express-validator');
 const Show = require('../models/Show');
 const Movie = require('../models/Movie');
 const Theater = require('../models/Theater');
-const { auth, theaterOwnerAuth, adminAuth } = require('../middleware/auth');
+const { auth, partnerAuth, adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ const handleValidation = (req, res, next) => {
 // @access  Public
 router.get('/', [
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 50 }),
+  query('limit').optional().isInt({ min: 1, max: 100 }),
   query('movie').optional().isMongoId(),
   query('theater').optional().isMongoId(),
   query('city').optional().isString(),
@@ -43,11 +43,8 @@ router.get('/', [
       language
     } = req.query;
 
-    // Build filter object
-    const filter = { 
-      isActive: true,
-      status: 'scheduled'
-    };
+    // Build filter object - For admin requests, show all shows
+    const filter = {};
     
     if (movie) filter.movie = movie;
     if (theater) filter.theater = theater;
@@ -63,7 +60,7 @@ router.get('/', [
         $lt: endDate
       };
     } else {
-      // Only show future shows by default
+      // If no date is specified, only show future shows
       filter.showDate = { $gte: new Date() };
     }
 
@@ -90,6 +87,36 @@ router.get('/', [
         .lean(),
       Show.countDocuments(filter)
     ]);
+
+    // Clean up expired reservations for all shows
+    const now = new Date();
+    let totalCleaned = 0;
+    
+    for (const show of shows) {
+      if (show.seats?.reserved?.length > 0) {
+        const expiredCount = show.seats.reserved.filter(seat => 
+          new Date(seat.expiresAt) <= now
+        ).length;
+        
+        if (expiredCount > 0) {
+          totalCleaned += expiredCount;
+          // Update in database
+          await Show.findByIdAndUpdate(show._id, {
+            'seats.reserved': show.seats.reserved.filter(seat => 
+              new Date(seat.expiresAt) > now
+            )
+          });
+          // Update in-memory object
+          show.seats.reserved = show.seats.reserved.filter(seat => 
+            new Date(seat.expiresAt) > now
+          );
+        }
+      }
+    }
+    
+    if (totalCleaned > 0) {
+      console.log(`Cleaned up ${totalCleaned} expired reservations across ${shows.length} shows`);
+    }
 
     const totalPages = Math.ceil(totalShows / limit);
 
@@ -130,6 +157,20 @@ router.get('/:id', async (req, res) => {
         success: false,
         message: 'Show not found'
       });
+    }
+
+    // Clean up expired reservations
+    const now = new Date();
+    const expiredCount = show.seats.reserved.filter(seat => 
+      new Date(seat.expiresAt) <= now
+    ).length;
+    
+    if (expiredCount > 0) {
+      console.log(`Cleaning up ${expiredCount} expired reservations from show ${show._id}`);
+      show.seats.reserved = show.seats.reserved.filter(seat => 
+        new Date(seat.expiresAt) > now
+      );
+      await show.save();
     }
 
     // Get the specific screen details
@@ -191,11 +232,12 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/shows
 // @desc    Create new show (Theater Owner/Admin)
 // @access  Private
-router.post('/', auth, theaterOwnerAuth, [
+router.post('/', auth, partnerAuth, [
   body('movie').isMongoId().withMessage('Valid movie ID is required'),
   body('theater').isMongoId().withMessage('Valid theater ID is required'),
   body('screen.screenNumber').isInt({ min: 1 }).withMessage('Valid screen number is required'),
-  body('showDate').isISO8601().withMessage('Valid show date is required'),
+  body('screen.name').notEmpty().withMessage('Screen name is required'),
+  body('showDate').notEmpty().withMessage('Show date is required'),
   body('showTime').matches(/^([01]?\d|2[0-3]):[0-5]\d$/).withMessage('Valid show time (HH:MM) is required'),
   body('language').notEmpty().withMessage('Language is required'),
   body('format').isIn(['2D', '3D', 'IMAX', '4DX']).withMessage('Valid format is required'),
@@ -279,13 +321,27 @@ router.post('/', auth, theaterOwnerAuth, [
       }
     }
 
-    // Create show
+    // Create show - Format blocked seats properly
+    let blockedSeats = [];
+    if (theaterScreen.seatLayout?.blockedSeats && Array.isArray(theaterScreen.seatLayout.blockedSeats)) {
+      blockedSeats = theaterScreen.seatLayout.blockedSeats.map(seat => {
+        // Handle different seat data formats
+        const seatId = seat.seatId || `${seat.row}${seat.seatNumber}`;
+        return {
+          seatId: seatId,
+          row: String(seat.row),
+          seatNumber: Number(seat.seatNumber),
+          reason: seat.reason || 'Maintenance'
+        };
+      });
+    }
+
     const show = new Show({
       movie: movieId,
       theater: theaterId,
       screen: {
         screenNumber: screen.screenNumber,
-        name: theaterScreen.name
+        name: screen.name
       },
       showDate: new Date(showDate),
       showTime,
@@ -294,9 +350,9 @@ router.post('/', auth, theaterOwnerAuth, [
       pricing,
       seats: {
         total: theaterScreen.capacity,
-        available: theaterScreen.capacity,
+        available: theaterScreen.capacity - blockedSeats.length,
         booked: [],
-        blocked: theaterScreen.seatLayout.blockedSeats || []
+        blocked: blockedSeats
       }
     });
 
@@ -318,9 +374,12 @@ router.post('/', auth, theaterOwnerAuth, [
 
   } catch (error) {
     console.error('Create show error:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Server error creating show'
+      message: 'Server error creating show',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -328,7 +387,7 @@ router.post('/', auth, theaterOwnerAuth, [
 // @route   PUT /api/shows/:id
 // @desc    Update show (Theater Owner/Admin)
 // @access  Private
-router.put('/:id', auth, theaterOwnerAuth, async (req, res) => {
+router.put('/:id', auth, partnerAuth, async (req, res) => {
   try {
     const show = await Show.findById(req.params.id).populate('theater');
 
@@ -380,7 +439,7 @@ router.put('/:id', auth, theaterOwnerAuth, async (req, res) => {
 // @route   DELETE /api/shows/:id
 // @desc    Cancel show (Theater Owner/Admin)
 // @access  Private
-router.delete('/:id', auth, theaterOwnerAuth, async (req, res) => {
+router.delete('/:id', auth, partnerAuth, async (req, res) => {
   try {
     const show = await Show.findById(req.params.id).populate('theater');
 

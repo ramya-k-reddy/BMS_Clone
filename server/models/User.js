@@ -28,8 +28,12 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin', 'theater-owner'],
+    enum: ['user', 'admin', 'partner'],
     default: 'user'
+  },
+  approved: {
+    type: Boolean,
+    default: function() { return this.role !== 'partner'; }
   },
   avatar: {
     type: String,

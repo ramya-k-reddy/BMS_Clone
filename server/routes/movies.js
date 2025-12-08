@@ -36,7 +36,7 @@ router.get('/', [
       limit = 10,
       genre,
       language,
-      status = 'now-showing',
+      status,
       city,
       search,
       sortBy = 'releaseDate',
@@ -46,6 +46,7 @@ router.get('/', [
     // Build filter object
     const filter = { isActive: true };
     
+    // Only filter by status if explicitly provided
     if (status) filter.status = status;
     if (genre) filter.genre = { $in: [genre] };
     if (language) filter.language = { $in: [language] };
@@ -234,11 +235,7 @@ router.put('/:id', auth, adminAuth, [
 // @access  Private/Admin
 router.delete('/:id', auth, adminAuth, async (req, res) => {
   try {
-    const movie = await Movie.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const movie = await Movie.findByIdAndDelete(req.params.id);
 
     if (!movie) {
       return res.status(404).json({

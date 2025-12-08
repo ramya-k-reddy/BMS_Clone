@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Theater = require('../models/Theater');
-const { auth, theaterOwnerAuth, adminAuth } = require('../middleware/auth');
+const { auth, partnerAuth, adminAuth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -26,7 +26,7 @@ router.get('/', [
   query('limit').optional().isInt({ min: 1, max: 50 }),
   query('city').optional().isString(),
   query('search').optional().isString()
-], handleValidation, async (req, res) => {
+], handleValidation, optionalAuth, async (req, res) => {
   try {
     const {
       page = 1,
@@ -38,11 +38,13 @@ router.get('/', [
       radius = 10 // km
     } = req.query;
 
-    // Build filter object
-    const filter = { 
-      isActive: true,
-      verificationStatus: 'verified'
-    };
+    // Build filter object - admins see all theaters, others see only verified and active
+    const filter = {};
+    
+    if (req.user?.role !== 'admin') {
+      filter.isActive = true;
+      filter.verificationStatus = 'verified';
+    }
     
     if (city) {
       filter['address.city'] = { $regex: city, $options: 'i' };
@@ -74,7 +76,7 @@ router.get('/', [
     const [theaters, totalTheaters] = await Promise.all([
       Theater.find(filter)
         .populate('owner', 'name email phone')
-        .select('-screens.seatLayout') // Exclude detailed seat layout for list view
+        // Include screens with seatLayout for admin show creation
         .skip(skip)
         .limit(parseInt(limit))
         .lean(),
@@ -145,7 +147,7 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/theaters
 // @desc    Create new theater (Theater Owner/Admin)
 // @access  Private
-router.post('/', auth, theaterOwnerAuth, [
+router.post('/', auth, partnerAuth, [
   body('name').trim().notEmpty().withMessage('Theater name is required'),
   body('address.street').trim().notEmpty().withMessage('Street address is required'),
   body('address.city').trim().notEmpty().withMessage('City is required'),
@@ -385,7 +387,7 @@ router.put('/:id/verify', auth, adminAuth, async (req, res) => {
 // @route   GET /api/theaters/owner/my-theaters
 // @desc    Get theaters owned by current user
 // @access  Private/Theater Owner
-router.get('/owner/my-theaters', auth, theaterOwnerAuth, async (req, res) => {
+router.get('/owner/my-theaters', auth, partnerAuth, async (req, res) => {
   try {
     const theaters = await Theater.find({ owner: req.user._id })
       .populate('shows')

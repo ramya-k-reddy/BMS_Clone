@@ -67,14 +67,23 @@ const adminAuth = (req, res, next) => {
   next();
 };
 
-// Theater owner role middleware
-const theaterOwnerAuth = (req, res, next) => {
-  if (req.user.role !== 'theater-owner' && req.user.role !== 'admin') {
+// Partner role middleware
+const partnerAuth = (req, res, next) => {
+  if (req.user.role !== 'partner' && req.user.role !== 'admin') {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Theater owner privileges required.'
+      message: 'Access denied. Partner privileges required.'
     });
   }
+  
+  // Check if partner is approved
+  if (req.user.role === 'partner' && !req.user.approved) {
+    return res.status(403).json({
+      success: false,
+      message: 'Account pending approval. Please wait for admin approval.'
+    });
+  }
+  
   next();
 };
 
@@ -100,6 +109,6 @@ module.exports = {
   generateToken,
   auth,
   adminAuth,
-  theaterOwnerAuth,
+  partnerAuth,
   optionalAuth
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 import { selectIsAdmin } from '../store/slices/authSlice';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -10,6 +11,8 @@ const AdminAddMovie = () => {
   const navigate = useNavigate();
   const isAdmin = useSelector(selectIsAdmin);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -45,12 +48,18 @@ const AdminAddMovie = () => {
     }));
   };
 
-  const handleArrayChange = (field, value) => {
-    const items = value.split(',').map(item => item.trim()).filter(item => item);
-    setFormData(prev => ({
-      ...prev,
-      [field]: items
-    }));
+  const handleMultiSelect = (field, value) => {
+    setFormData(prev => {
+      const currentValues = prev[field];
+      const isSelected = currentValues.includes(value);
+      
+      return {
+        ...prev,
+        [field]: isSelected 
+          ? currentValues.filter(item => item !== value)
+          : [...currentValues, value]
+      };
+    });
   };
 
   const handleCastChange = (index, field, value) => {
@@ -78,12 +87,60 @@ const AdminAddMovie = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add API call here
-    console.log('Movie data:', formData);
-    alert('Movie added successfully!');
-    navigate('/admin/movies');
+    setError('');
+    setLoading(true);
+
+    try {
+      // Validate required array fields
+      if (formData.genre.length === 0) {
+        setError('Please select at least one genre');
+        setLoading(false);
+        return;
+      }
+      if (formData.language.length === 0) {
+        setError('Please select at least one language');
+        setLoading(false);
+        return;
+      }
+      if (formData.format.length === 0) {
+        setError('Please select at least one format');
+        setLoading(false);
+        return;
+      }
+
+      // Get auth token
+      const token = localStorage.getItem('token');
+      
+      // Prepare movie data
+      const movieData = {
+        ...formData,
+        duration: parseInt(formData.duration),
+        cast: formData.cast.filter(member => member.name.trim() !== '')
+      };
+
+      // Make API call
+      const response = await axios.post('/api/movies', movieData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        alert('Movie added successfully!');
+        // Navigate with state to trigger reload
+        navigate('/admin/movies', { state: { reload: true } });
+      }
+    } catch (err) {
+      console.error('Add movie error:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to add movie. Please try again.';
+      setError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isAdmin) {
@@ -107,6 +164,19 @@ const AdminAddMovie = () => {
               
               <div className="admin-card">
                 <form onSubmit={handleSubmit} className="admin-form">
+                  {error && (
+                    <div className="error-message" style={{ 
+                      background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(185, 28, 28, 0.1))',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#fca5a5',
+                      padding: '1rem',
+                      borderRadius: '12px',
+                      marginBottom: '1.5rem',
+                      fontSize: '0.875rem'
+                    }}>
+                      ⚠️ {error}
+                    </div>
+                  )}
               {/* Basic Information */}
               <div className="form-section">
                 <h3 className="section-title">Basic Information</h3>
@@ -215,41 +285,74 @@ const AdminAddMovie = () => {
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label">Genre *</label>
-                    <input
-                      type="text"
-                      value={formData.genre.join(', ')}
-                      onChange={(e) => handleArrayChange('genre', e.target.value)}
-                      className="form-control"
-                      placeholder="Action, Drama, Thriller (comma-separated)"
-                      required
-                    />
-                    <small className="form-hint">Separate multiple genres with commas</small>
+                    <div className="multi-select-container">
+                      <div className="multi-select-grid">
+                        {['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'Animation', 'Biography', 'Crime', 'Documentary', 'Family', 'History', 'Music', 'Mystery', 'War', 'Western'].map(genre => (
+                          <label key={genre} className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={formData.genre.includes(genre)}
+                              onChange={() => handleMultiSelect('genre', genre)}
+                              className="checkbox-input"
+                            />
+                            <span className="checkbox-text">{genre}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {formData.genre.length > 0 && (
+                        <div className="selected-items">
+                          <strong>Selected:</strong> {formData.genre.join(', ')}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="form-group">
                     <label className="form-label">Languages *</label>
-                    <input
-                      type="text"
-                      value={formData.language.join(', ')}
-                      onChange={(e) => handleArrayChange('language', e.target.value)}
-                      className="form-control"
-                      placeholder="English, Hindi, Tamil (comma-separated)"
-                      required
-                    />
-                    <small className="form-hint">Separate multiple languages with commas</small>
+                    <div className="multi-select-container">
+                      <div className="multi-select-grid">
+                        {['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali', 'Marathi', 'Punjabi', 'Gujarati'].map(language => (
+                          <label key={language} className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={formData.language.includes(language)}
+                              onChange={() => handleMultiSelect('language', language)}
+                              className="checkbox-input"
+                            />
+                            <span className="checkbox-text">{language}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {formData.language.length > 0 && (
+                        <div className="selected-items">
+                          <strong>Selected:</strong> {formData.language.join(', ')}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="form-group">
                     <label className="form-label">Format *</label>
-                    <input
-                      type="text"
-                      value={formData.format.join(', ')}
-                      onChange={(e) => handleArrayChange('format', e.target.value)}
-                      className="form-control"
-                      placeholder="2D, 3D, IMAX (comma-separated)"
-                      required
-                    />
-                    <small className="form-hint">Separate multiple formats with commas</small>
+                    <div className="multi-select-container">
+                      <div className="multi-select-grid">
+                        {['2D', '3D', 'IMAX', '4DX'].map(format => (
+                          <label key={format} className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={formData.format.includes(format)}
+                              onChange={() => handleMultiSelect('format', format)}
+                              className="checkbox-input"
+                            />
+                            <span className="checkbox-text">{format}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {formData.format.length > 0 && (
+                        <div className="selected-items">
+                          <strong>Selected:</strong> {formData.format.join(', ')}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -355,11 +458,20 @@ const AdminAddMovie = () => {
 
               {/* Action Buttons */}
               <div className="form-actions">
-                <button type="button" onClick={() => navigate('/admin/movies')} className="btn-cancel">
+                <button 
+                  type="button" 
+                  onClick={() => navigate('/admin/movies')} 
+                  className="btn-cancel"
+                  disabled={loading}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
-                  Add Movie
+                <button 
+                  type="submit" 
+                  className="btn-submit"
+                  disabled={loading}
+                >
+                  {loading ? 'Adding Movie...' : 'Add Movie'}
                 </button>
               </div>
             </form>

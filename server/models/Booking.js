@@ -4,7 +4,7 @@ const bookingSchema = new mongoose.Schema({
   bookingId: {
     type: String,
     unique: true,
-    required: true
+    required: false // Generated in pre-save hook
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -84,7 +84,7 @@ const bookingSchema = new mongoose.Schema({
     },
     method: {
       type: String,
-      enum: ['card', 'wallet', 'upi', 'netbanking'],
+      enum: ['card', 'wallet', 'upi', 'netbanking', 'stripe', 'pending'],
       required: true
     },
     status: {
@@ -112,8 +112,8 @@ const bookingSchema = new mongoose.Schema({
   },
   bookingStatus: {
     type: String,
-    enum: ['confirmed', 'cancelled', 'refunded', 'expired'],
-    default: 'confirmed'
+    enum: ['pending', 'confirmed', 'cancelled', 'refunded', 'expired'],
+    default: 'pending'
   },
   cancellation: {
     cancelledAt: Date,

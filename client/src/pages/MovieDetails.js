@@ -22,15 +22,20 @@ const MovieDetails = () => {
       setLoading(true);
       const [movieRes, showsRes] = await Promise.all([
         axios.get(`/api/movies/${id}`),
-        axios.get(`/api/shows/movie/${id}`)
+        axios.get(`/api/shows`, { params: { movie: id } })
       ]);
       
-      setMovie(movieRes.data.data);
-      setShows(showsRes.data.data || []);
+      console.log('Fetched movie:', movieRes.data.data);
+      console.log('Fetched shows:', showsRes.data.data);
+      
+      setMovie(movieRes.data.data.movie);
+      const showsData = showsRes.data.data?.shows || [];  
+      setShows(showsData);
       
       // Set first available date as selected
-      if (showsRes.data.data && showsRes.data.data.length > 0) {
-        const dates = getUniqueDates(showsRes.data.data);
+      if (showsData && showsData.length > 0) {
+        const dates = getUniqueDates(showsData);
+        console.log('Available dates:', dates);
         setSelectedDate(dates[0]);
       }
       
@@ -51,9 +56,10 @@ const MovieDetails = () => {
     if (!Array.isArray(showsArray) || showsArray.length === 0) {
       return [];
     }
-    const dates = [...new Set(showsArray.map(show => 
-      new Date(show.showDate).toDateString()
-    ))];
+    const dates = [...new Set(showsArray.map(show => {
+      const date = new Date(show.showDate);
+      return date.toDateString();
+    }))];
     return dates.sort((a, b) => new Date(a) - new Date(b));
   };
 
@@ -184,9 +190,18 @@ const MovieDetails = () => {
             <div className="detail-item">
               <span className="detail-label">Release Date</span>
               <span className="detail-value">
-                {new Date(movie.releaseDate).toLocaleDateString('en-US', { 
-                  year: 'numeric', month: 'long', day: 'numeric' 
-                })}
+                {(() => {
+                  if (!movie.releaseDate) return 'N/A';
+                  try {
+                    const date = new Date(movie.releaseDate);
+                    if (isNaN(date.getTime())) return 'N/A';
+                    return date.toLocaleDateString('en-US', { 
+                      year: 'numeric', month: 'long', day: 'numeric' 
+                    });
+                  } catch (e) {
+                    return 'N/A';
+                  }
+                })()}
               </span>
             </div>
             <div className="detail-item">

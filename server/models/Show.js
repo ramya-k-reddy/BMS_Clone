@@ -91,6 +91,40 @@ const showSchema = new mongoose.Schema({
         default: Date.now
       }
     }],
+    reserved: [{
+      seatId: {
+        type: String,
+        required: true
+      },
+      row: {
+        type: String,
+        required: true
+      },
+      seatNumber: {
+        type: Number,
+        required: true
+      },
+      category: {
+        type: String,
+        required: true
+      },
+      reservedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      bookingId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Booking'
+      },
+      reservedAt: {
+        type: Date,
+        default: Date.now
+      },
+      expiresAt: {
+        type: Date,
+        required: true
+      }
+    }],
     blocked: [{
       seatId: {
         type: String,
@@ -152,7 +186,31 @@ showSchema.virtual('showDateTime').get(function() {
 // Method to check if show is bookable
 showSchema.methods.isBookable = function() {
   const now = new Date();
-  const showDateTime = new Date(`${this.showDate.toISOString().split('T')[0]} ${this.showTime}`);
+  
+  // Parse the show date and time
+  let showDateTime;
+  try {
+    // showDate is stored as Date object, showTime is "HH:MM" format
+    const showDateObj = new Date(this.showDate);
+    const [hours, minutes] = this.showTime.split(':').map(Number);
+    
+    // Create datetime by combining date and time
+    showDateTime = new Date(showDateObj);
+    showDateTime.setHours(hours, minutes, 0, 0);
+    
+    console.log('Bookability check:', {
+      now: now.toISOString(),
+      showDateTime: showDateTime.toISOString(),
+      isPast: showDateTime < now,
+      status: this.status,
+      isActive: this.isActive,
+      availableSeats: this.seats.available
+    });
+  } catch (error) {
+    console.error('Error parsing show date/time:', error);
+    // If date parsing fails, allow booking (don't block due to date issues)
+    return this.status === 'scheduled' && this.isActive && this.seats.available > 0;
+  }
   
   return (
     this.status === 'scheduled' &&

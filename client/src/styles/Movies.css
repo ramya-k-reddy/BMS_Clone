@@ -60,20 +60,23 @@
   backdrop-filter: blur(20px);
   padding: 2rem;
   border-bottom: 1px solid rgba(75, 85, 99, 0.1);
-  position: sticky;
-  top: 64px;
-  z-index: 40;
 }
 
 .movies-filters-container {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Search Bar */
 .movies-search-bar {
   position: relative;
-  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
+  box-sizing: border-box;
 }
 
 .movies-search-icon {
@@ -85,6 +88,7 @@
   height: 20px;
   color: #6b7280;
   pointer-events: none;
+  z-index: 1;
 }
 
 .movies-search-input {
@@ -96,6 +100,7 @@
   color: #f9fafb;
   font-size: 1rem;
   transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .movies-search-input:focus {
@@ -508,5 +513,386 @@
   .movies-filter-btn {
     padding: 0.375rem 0.75rem;
     font-size: 0.8125rem;
+  }
+}
+
+/* Search Type Section */
+.search-type-section {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.search-type-tabs {
+  display: flex;
+  gap: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
+}
+
+.tab-button {
+  flex: 1;
+  min-width: 140px;
+  padding: 1rem 1.5rem;
+  background: rgba(31, 41, 55, 0.6);
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  border-radius: 12px;
+  color: #9ca3af;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+/* Theaters List */
+.theaters-list-section {
+  background: transparent;
+  padding: 3rem 2rem;
+  min-height: 60vh;
+}
+
+.theaters-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.theater-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.8));
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.theater-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2);
+}
+
+.theater-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+}
+
+.theater-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.theater-card-screens {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 0.375rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.theater-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.theater-card-address {
+  display: flex;
+  gap: 0.75rem;
+  color: #9ca3af;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.theater-icon {
+  width: 20px;
+  height: 20px;
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.theater-card-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.theater-amenity-badge {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 3rem auto;
+  padding: 1.5rem 0;
+  max-width: 800px;
+}
+
+.pagination-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: rgba(31, 41, 55, 0.8);
+  color: #e5e7eb;
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.pagination-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pagination-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-number {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 41, 55, 0.6);
+  color: #e5e7eb;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.pagination-number:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.pagination-number.active {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.pagination-ellipsis {
+  color: #9ca3af;
+  padding: 0 0.5rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .search-type-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .search-type-tabs {
+    max-width: 100%;
+    gap: 0.75rem;
+  }
+
+  .tab-button {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+  }
+
+  .theaters-list {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .theater-card-title {
+    font-size: 1.25rem;
+  }
+
+  .movies-filters-section {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .movies-filters-container {
+    padding: 0 0.5rem;
+    max-width: 100%;
+  }
+
+  .movies-search-bar {
+    margin-bottom: 0;
+    max-width: 100%;
+  }
+
+  .movies-search-input {
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    font-size: 0.9375rem;
+    max-width: 100%;
+  }
+
+  .movies-search-icon {
+    width: 18px;
+    height: 18px;
+    left: 0.875rem;
+  }
+
+  .movies-hero {
+    padding: 3rem 1.5rem;
+  }
+
+  .movies-hero-title {
+    font-size: 2rem;
+  }
+
+  .movies-hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .pagination-container {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 0;
+  }
+
+  .pagination-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .pagination-numbers {
+    gap: 0.375rem;
+  }
+
+  .pagination-number {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
+  }
+
+  .pagination-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-type-section {
+    padding: 1.25rem 0.5rem;
+  }
+
+  .search-type-tabs {
+    gap: 0.5rem;
+  }
+
+  .tab-button {
+    min-width: 100px;
+    padding: 0.75rem 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .movies-filters-section {
+    padding: 1rem 0.5rem;
+  }
+
+  .movies-filters-container {
+    padding: 0 0.25rem;
+  }
+
+  .movies-search-input {
+    padding: 0.625rem 0.875rem 0.625rem 2.5rem;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    max-width: 100%;
+  }
+
+  .movies-search-icon {
+    width: 16px;
+    height: 16px;
+    left: 0.75rem;
+  }
+
+  .movies-hero-title {
+    font-size: 1.75rem;
+  }
+
+  .movies-hero-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .pagination-button span {
+    display: none;
+  }
+
+  .pagination-button {
+    padding: 0.5rem;
+    min-width: 2.25rem;
   }
 }

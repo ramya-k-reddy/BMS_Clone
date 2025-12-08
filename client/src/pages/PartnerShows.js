@@ -2,14 +2,55 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
-import { selectIsAdmin } from '../store/slices/authSlice';
-import AdminSidebar from '../components/admin/AdminSidebar';
-import AdminHeader from '../components/admin/AdminHeader';
+import { selectIsPartner } from '../store/slices/authSlice';
 import '../styles/Admin.css';
 
-const AdminShows = () => {
-    // Form state for Add Show modal
-    const [formData, setFormData] = useState({
+const PartnerShows = () => {
+  // Form state for Add Show modal
+  const [formData, setFormData] = useState({
+    movie: '',
+    theater: '',
+    screen: '',
+    showDate: '',
+    showTime: '',
+    language: '',
+    format: '',
+    pricing: []
+  });
+
+  // Modal visibility state
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Handler for input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // When theater is selected, load its screens
+    if (name === 'theater' && value) {
+      const selectedTheater = theaters.find(t => t._id === value);
+      if (selectedTheater) {
+        setSelectedTheaterScreens(selectedTheater.screens || []);
+      }
+    }
+    
+    // When screen is selected, load its pricing
+    if (name === 'screen' && value) {
+      const selectedScreen = selectedTheaterScreens.find(s => s.screenNumber === parseInt(value));
+      if (selectedScreen && selectedScreen.seatLayout && selectedScreen.seatLayout.seatCategories) {
+        const pricing = selectedScreen.seatLayout.seatCategories.map(cat => ({
+          category: cat.category,
+          price: cat.price
+        }));
+        setFormData(prev => ({ ...prev, pricing }));
+      }
+    }
+  };
+
+  // Handler to close modal
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({
       movie: '',
       theater: '',
       screen: '',
@@ -19,37 +60,15 @@ const AdminShows = () => {
       format: '',
       pricing: []
     });
+  };
 
-    // Modal visibility state
-    const [showAddModal, setShowAddModal] = useState(false);
+  // Handler for search box
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
 
-    // Handler for input changes
-    const handleInputChange = (e) => {
-      const { name, value } = e.target;
-      setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    // Handler to close modal
-    const handleCloseModal = () => {
-      setShowAddModal(false);
-      setFormData({
-        movie: '',
-        theater: '',
-        screen: '',
-        showDate: '',
-        showTime: '',
-        language: '',
-        format: '',
-        pricing: []
-      });
-    };
-
-    // Handler for search box
-    const handleSearch = (e) => {
-      setSearchTerm(e.target.value);
-    };
   const navigate = useNavigate();
-  const isAdmin = useSelector(selectIsAdmin);
+  const isPartner = useSelector(selectIsPartner);
   const [shows, setShows] = useState([]);
   const [movies, setMovies] = useState([]);
   const [theaters, setTheaters] = useState([]);
@@ -57,13 +76,12 @@ const AdminShows = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('all');
-  const [filterTheater, setFilterTheater] = useState('all');
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isPartner) {
       navigate('/');
     }
-  }, [isAdmin, navigate]);
+  }, [isPartner, navigate]);
 
   // Load movies, theaters, and shows on mount
   useEffect(() => {
@@ -93,25 +111,17 @@ const AdminShows = () => {
         if (showsRes.data.success) {
           setShows(showsRes.data.data.shows || []);
         }
+        setLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);
         console.error('Error details:', error.response?.data);
         alert('Failed to load data. Please refresh the page.');
-        // Example: set default pricing if error occurs (if needed)
-        // const defaultPricing = [
-        //   { category: 'Gold', price: 250 },
-        //   { category: 'Silver', price: 180 }
-        // ];
-        // setFormData(prev => ({
-        //   ...prev,
-        //   [name]: value,
-        //   pricing: defaultPricing
-        // }));
-        // return;
+        setLoading(false);
       }
     };
     loadData();
   }, []);
+
   const handlePricingChange = (index, value) => {
     const newPricing = [...formData.pricing];
     newPricing[index].price = parseFloat(value) || 0;
@@ -179,24 +189,22 @@ const AdminShows = () => {
     }
   };
 
-  const handleToggleStatus = async (showId) => {
-    const show = shows.find(s => s._id === showId);
-    const newStatus = !show.isActive;
+  const handleDeleteShow = async (showId) => {
+    if (!window.confirm('Are you sure you want to delete this show? This action cannot be undone.')) {
+      return;
+    }
     
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`/api/shows/${showId}`, 
-        { isActive: newStatus },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      await axios.delete(`/api/shows/${showId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       
-      setShows(shows.map(s => 
-        s._id === showId ? { ...s, isActive: newStatus } : s
-      ));
-      alert(`Show ${newStatus ? 'activated' : 'cancelled'} successfully!`);
+      setShows(prevShows => prevShows.filter(s => s._id !== showId));
+      alert('Show deleted successfully!');
     } catch (error) {
-      console.error('Error toggling show status:', error);
-      alert('Failed to update show status. Please try again.');
+      console.error('Error deleting show:', error);
+      alert('Failed to delete show. Please try again.');
     }
   };
 
@@ -206,75 +214,78 @@ const AdminShows = () => {
     const searchLower = searchTerm.toLowerCase();
     
     const matchesSearch = movieTitle.includes(searchLower) || theaterName.includes(searchLower);
-    const showDateStr = new Date(show.showDate).toISOString().split('T')[0];
-    const matchesDate = filterDate === 'all' || showDateStr === filterDate;
-    const matchesTheater = filterTheater === 'all' || show.theater?._id === filterTheater || show.theater === filterTheater;
     
-    return matchesSearch && matchesDate && matchesTheater;
+    // Enhanced date filtering
+    const showDate = new Date(show.showDate);
+    const showDateStr = showDate.toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    let matchesDate = false;
+    
+    switch (filterDate) {
+      case 'all':
+        matchesDate = true;
+        break;
+      case 'today':
+        matchesDate = showDateStr === todayStr;
+        break;
+      case 'tomorrow':
+        matchesDate = showDateStr === tomorrowStr;
+        break;
+      case 'this-week':
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        matchesDate = showDate >= startOfWeek && showDate <= endOfWeek;
+        break;
+      case 'next-week':
+        const startOfNextWeek = new Date(today);
+        startOfNextWeek.setDate(today.getDate() - today.getDay() + 7);
+        const endOfNextWeek = new Date(startOfNextWeek);
+        endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+        matchesDate = showDate >= startOfNextWeek && showDate <= endOfNextWeek;
+        break;
+      default:
+        // Specific date selected
+        matchesDate = showDateStr === filterDate;
+    }
+    
+    return matchesSearch && matchesDate;
   });
 
-  const stats = {
-    totalShows: shows.length,
-    activeShows: shows.filter(s => s.isActive).length,
-    soldOutShows: shows.filter(s => s.seats?.available === 0).length,
-    totalBookings: shows.reduce((sum, s) => sum + (s.seats?.booked?.length || 0), 0)
-  };
 
-  if (!isAdmin) {
+
+  if (!isPartner) {
     return null;
   }
 
   return (
     <div className="admin-container">
       <div className="admin-layout">
-        <AdminSidebar />
         <div className="admin-main">
-          <AdminHeader title="Shows Management" />
-          <div className="admin-content">
-            <div className="admin-main-content">
-          {/* Statistics Cards */}
-          <div className="dashboard-stats">
-            <div className="stat-card">
-              <div className="stat-icon stat-icon-blue">
-                <span className="text-2xl">🎬</span>
+          <div className="admin-header" style={{ padding: '20px', backgroundColor: '#1f2937', borderBottom: '1px solid #374151' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 className="admin-title" style={{ color: 'white', margin: 0 }}>Partner Dashboard - Manage Shows</h1>
+                <p style={{ color: '#9ca3af', margin: '5px 0 0 0', fontSize: '14px' }}>Add and manage movie shows for your theaters</p>
               </div>
-              <div className="stat-details">
-                <p className="stat-label">Total Shows</p>
-                <p className="stat-value">{stats.totalShows}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon stat-icon-green">
-                <span className="text-2xl">✅</span>
-              </div>
-              <div className="stat-details">
-                <p className="stat-label">Active Shows</p>
-                <p className="stat-value">{stats.activeShows}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon stat-icon-red">
-                <span className="text-2xl">🔥</span>
-              </div>
-              <div className="stat-details">
-                <p className="stat-label">Sold Out</p>
-                <p className="stat-value">{stats.soldOutShows}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon stat-icon-purple">
-                <span className="text-2xl">🎟️</span>
-              </div>
-              <div className="stat-details">
-                <p className="stat-label">Total Bookings</p>
-                <p className="stat-value">{stats.totalBookings}</p>
-              </div>
+              <button 
+                className="btn-primary"
+                onClick={() => setShowAddModal(true)}
+                style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                + Add New Show
+              </button>
             </div>
           </div>
-
+          
+          <div className="admin-content">
+            <div className="admin-main-content">
           {/* Filters and Search */}
           <div className="admin-card filters-card">
             <div className="filters-container">
@@ -295,29 +306,13 @@ const AdminShows = () => {
                   className="admin-select"
                 >
                   <option value="all">All Dates</option>
-                  {[...new Set(shows.map(s => new Date(s.showDate).toISOString().split('T')[0]))]
-                    .sort()
-                    .slice(0, 7)
-                    .map(date => (
-                      <option key={date} value={date}>
-                        {new Date(date).toLocaleDateString()}
-                      </option>
-                    ))
-                  }
+                  <option value="today">Today</option>
+                  <option value="tomorrow">Tomorrow</option>
+                  <option value="this-week">This Week</option>
+                  <option value="next-week">Next Week</option>
                 </select>
 
-                <select
-                  value={filterTheater}
-                  onChange={(e) => setFilterTheater(e.target.value)}
-                  className="admin-select"
-                >
-                  <option value="all">All Theaters</option>
-                  {theaters.map(theater => (
-                    <option key={theater._id} value={theater._id}>
-                      {theater.name}
-                    </option>
-                  ))}
-                </select>
+
 
               </div>
             </div>
@@ -401,26 +396,12 @@ const AdminShows = () => {
                           <td>
                             <div className="action-buttons">
                               <button
-                                onClick={() => navigate(`/admin/shows/edit/${show._id}`)}
-                                className="btn-icon btn-edit"
-                                title="Edit"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleToggleStatus(show._id)}
-                                className={`btn-icon ${show.isActive ? 'btn-pause' : 'btn-play'}`}
-                                title={show.isActive ? 'Cancel' : 'Activate'}
-                              >
-                                {show.isActive ? '⏸️' : '▶️'}
-                              </button>
-                              {/* <button
                                 onClick={() => handleDeleteShow(show._id)}
                                 className="btn-icon btn-delete"
-                                title="Delete"
+                                title="Delete Show"
                               >
                                 🗑️
-                              </button> */}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -602,4 +583,4 @@ const AdminShows = () => {
   );
 }
 
-export default AdminShows;
+export default PartnerShows;

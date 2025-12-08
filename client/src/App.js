@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './store';
 import { verifyToken, setInitialized } from './store/slices/authSlice';
-import { selectIsInitialized, selectAuthLoading } from './store/slices/authSlice';
+import { selectIsInitialized, selectAuthLoading, selectIsAuthenticated, selectIsAdmin, selectIsPartner, selectIsApprovedPartner, selectIsPendingPartner, selectUser } from './store/slices/authSlice';
 
 // Context Providers (for Socket.IO)
 import { SocketProvider } from './context/SocketContext';
@@ -13,6 +13,7 @@ import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/layout/Navbar';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
+import PartnerRoute from './components/auth/PartnerRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
 // Pages
@@ -32,7 +33,48 @@ import AdminMovies from './pages/AdminMovies';
 import AdminTheaters from './pages/AdminTheaters';
 import AdminShows from './pages/AdminShows';
 import AdminAddMovie from './pages/AdminAddMovie';
+import AdminEditMovie from './pages/AdminEditMovie';
 import AdminAddTheater from './pages/AdminAddTheater';
+import PartnerShows from './pages/PartnerShows';
+import PartnerAddShows from './pages/PartnerAddShows';
+import PendingApproval from './pages/PendingApproval';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+// Component to handle role-based home page redirects
+function RoleBasedHome() {
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const isAdmin = useSelector(selectIsAdmin);
+  const isApprovedPartner = useSelector(selectIsApprovedPartner);
+  const isPendingPartner = useSelector(selectIsPendingPartner);
+  const user = useSelector(selectUser);
+  
+  // Debug logging
+  console.log('RoleBasedHome DEBUG:', {
+    isAuthenticated,
+    isAdmin,
+    isApprovedPartner,
+    isPendingPartner,
+    user,
+    userRole: user?.role,
+    userApproved: user?.approved
+  });
+
+  if (isAuthenticated) {
+    if (isAdmin) {
+      return <Navigate to="/admin" replace />;
+    } else if (isPendingPartner) {
+      return <Navigate to="/partner/pending-approval" replace />;
+    } else if (isApprovedPartner) {
+      return <Navigate to="/partner/shows" replace />;
+    } else {
+      return <Navigate to="/movies" replace />;
+    }
+  }
+  
+  // Not authenticated, show public home page
+  return <Home />;
+}
 
 function AppContent() {
   const dispatch = useDispatch();
@@ -76,16 +118,16 @@ function AppContent() {
           
           <Navbar />
           
-          <main>
+          <main style={{ paddingTop: '64px' }}>
             <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
+              {/* Public Routes with role-based redirects */}
+              <Route path="/" element={<RoleBasedHome />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/movie/:id" element={<MovieDetails />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              
-              {/* Protected Routes - Require Authentication */}
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/movie/:movieId/book/:showId" element={
                 <ProtectedRoute>
                   <SeatSelection />
@@ -96,7 +138,7 @@ function AppContent() {
                   <Payment />
                 </ProtectedRoute>
               } />
-              <Route path="/booking/confirmation/:bookingId" element={
+              <Route path="/booking-confirmation/:bookingId" element={
                 <ProtectedRoute>
                   <BookingConfirmation />
                 </ProtectedRoute>
@@ -128,6 +170,11 @@ function AppContent() {
                   <AdminAddMovie />
                 </AdminRoute>
               } />
+              <Route path="/admin/movies/edit/:id" element={
+                <AdminRoute>
+                  <AdminEditMovie />
+                </AdminRoute>
+              } />
               <Route path="/admin/theaters" element={
                 <AdminRoute>
                   <AdminTheaters />
@@ -142,6 +189,27 @@ function AppContent() {
                 <AdminRoute>
                   <AdminShows />
                 </AdminRoute>
+              } />
+              
+              {/* Partner Routes - Require Partner Role */}
+              <Route path="/partner/add-shows" element={
+                <PartnerRoute>
+                  <PartnerAddShows />
+                </PartnerRoute>
+              } />
+              
+              {/* Partner Shows Management */}
+              <Route path="/partner/shows" element={
+                <PartnerRoute>
+                  <PartnerShows />
+                </PartnerRoute>
+              } />
+              
+              {/* Partner Pending Approval */}
+              <Route path="/partner/pending-approval" element={
+                <ProtectedRoute>
+                  <PendingApproval />
+                </ProtectedRoute>
               } />
               
               {/* 404 Page */}

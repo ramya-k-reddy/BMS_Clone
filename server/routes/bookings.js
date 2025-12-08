@@ -6,6 +6,7 @@ const Movie = require('../models/Movie');
 const Theater = require('../models/Theater');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const { sendBookingCancellation } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -20,6 +21,31 @@ const handleValidation = (req, res, next) => {
     });
   }
   next();
+};
+
+// Helper function to release reserved seats
+const releaseReservedSeats = async (bookingId, showId) => {
+  try {
+    const show = await Show.findById(showId);
+    if (!show) return;
+
+    // Remove reserved seats for this booking
+    show.seats.reserved = show.seats.reserved.filter(
+      seat => seat.bookingId.toString() !== bookingId.toString()
+    );
+    
+    await show.save();
+    
+    // Send cancellation email
+    const booking = await Booking.findById(bookingId);
+    if (booking && booking.contactDetails) {
+      await sendBookingCancellation(booking, 'Payment timeout - seats released');
+    }
+    
+    console.log(`✅ Released reserved seats for booking ${bookingId}`);
+  } catch (error) {
+    console.error('Error releasing reserved seats:', error);
+  }
 };
 
 // @route   POST /api/bookings/initiate
@@ -45,23 +71,57 @@ router.post('/initiate', auth, [
       .populate('theater', 'name address');
 
     if (!show || !show.isActive) {
+      console.log('Show not found or inactive:', { showId, exists: !!show, isActive: show?.isActive });
       return res.status(404).json({
         success: false,
         message: 'Show not found'
       });
     }
 
-    if (!show.isBookable()) {
+    const bookable = show.isBookable();
+    console.log('Show bookability check:', {
+      showId,
+      status: show.status,
+      isActive: show.isActive,
+      showDate: show.showDate,
+      showTime: show.showTime,
+      availableSeats: show.seats.available,
+      isBookable: bookable
+    });
+
+    if (!bookable) {
       return res.status(400).json({
         success: false,
-        message: 'Show is not available for booking'
+        message: 'Show is not available for booking',
+        debug: {
+          status: show.status,
+          isActive: show.isActive,
+          showDate: show.showDate,
+          showTime: show.showTime,
+          availableSeats: show.seats.available
+        }
       });
+    }
+
+    // Clean up expired reservations before checking availability
+    const now = new Date();
+    const expiredReservations = show.seats.reserved.filter(seat => 
+      new Date(seat.expiresAt) <= now
+    );
+    
+    if (expiredReservations.length > 0) {
+      console.log(`Cleaning up ${expiredReservations.length} expired reservations`);
+      show.seats.reserved = show.seats.reserved.filter(seat => 
+        new Date(seat.expiresAt) > now
+      );
+      await show.save();
     }
 
     // Check if seats are available
     const bookedSeats = show.seats.booked.map(seat => seat.seatId);
     const blockedSeats = show.seats.blocked.map(seat => seat.seatId);
-    const unavailableSeats = [...bookedSeats, ...blockedSeats];
+    const reservedSeats = show.seats.reserved.map(seat => seat.seatId);
+    const unavailableSeats = [...bookedSeats, ...blockedSeats, ...reservedSeats];
 
     const requestedSeatIds = seats.map(seat => seat.seatId);
     const conflictingSeats = requestedSeatIds.filter(seatId => 
@@ -109,11 +169,11 @@ router.post('/initiate', auth, [
       },
       payment: {
         paymentId: `temp_${Date.now()}_${userId}`,
-        method: 'pending',
+        method: 'stripe', // Stripe payment method
         status: 'pending'
       },
       contactDetails,
-      bookingStatus: 'confirmed', // Will be updated after payment
+      // bookingStatus defaults to 'pending', will be updated to 'confirmed' after payment
       metadata: {
         userAgent: req.get('User-Agent'),
         ipAddress: req.ip,
@@ -121,19 +181,20 @@ router.post('/initiate', auth, [
       }
     });
 
-    // Reserve seats in show (temporarily)
+    // Reserve seats temporarily (not booked yet - only after payment)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     const seatReservations = seats.map(seat => ({
       seatId: seat.seatId,
       row: seat.row,
       seatNumber: seat.seatNumber,
       category: seat.category,
-      bookedBy: userId,
+      reservedBy: userId,
       bookingId: booking._id,
-      bookedAt: new Date()
+      reservedAt: new Date(),
+      expiresAt
     }));
 
-    show.seats.booked.push(...seatReservations);
-    show.seats.available -= seats.length;
+    show.seats.reserved.push(...seatReservations);
 
     // Save both booking and updated show
     await Promise.all([
@@ -151,8 +212,9 @@ router.post('/initiate', auth, [
       try {
         const pendingBooking = await Booking.findById(booking._id);
         if (pendingBooking && pendingBooking.payment.status === 'pending') {
-          // Cancel booking and release seats
-          await cancelBookingAndReleaseSeats(booking._id);
+          // Cancel booking and release reserved seats
+          await releaseReservedSeats(booking._id, showId);
+          console.log(`⏱️ Booking ${booking.bookingId} expired - seats released`);
         }
       } catch (error) {
         console.error('Error in booking timeout:', error);
@@ -162,19 +224,17 @@ router.post('/initiate', auth, [
     res.status(201).json({
       success: true,
       message: 'Booking initiated successfully. Please complete payment within 10 minutes.',
-      data: { 
-        booking: {
-          id: booking._id,
-          bookingId: booking.bookingId,
-          totalAmount: booking.totalAmount,
-          seats: booking.seats,
-          show: {
-            id: show._id,
-            movie: show.movie,
-            theater: show.theater,
-            showDate: show.showDate,
-            showTime: show.showTime
-          }
+      data: {
+        _id: booking._id,
+        bookingId: booking.bookingId,
+        totalAmount: booking.totalAmount,
+        seats: booking.seats,
+        show: {
+          id: show._id,
+          movie: show.movie,
+          theater: show.theater,
+          showDate: show.showDate,
+          showTime: show.showTime
         }
       }
     });

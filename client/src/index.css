@@ -118,11 +118,17 @@ code {
 
 /* Enhanced Navbar Styles */
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   backdrop-filter: blur(10px);
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
   width: 100%;
   min-height: 64px;
+  z-index: 1000;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
 .nav-container > div {
@@ -269,4 +275,70 @@ code {
     padding: 0.4rem 0.4rem !important;
     font-size: 0.75rem;
   }
+}
+
+/* Additional UI Enhancements */
+/* Button hover effects */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Card transitions */
+.transition-shadow {
+  transition: box-shadow 0.3s ease;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* Status badge styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.status-badge.confirmed {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.expired {
+  background-color: #f3f4f6;
+  color: #374151;
 }

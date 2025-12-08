@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { generateToken, auth } = require('../middleware/auth');
+const authController = require('../controllers/auth');
 
 const router = express.Router();
 
@@ -68,12 +69,14 @@ router.post('/register', validateRegister, handleValidation, async (req, res) =>
     }
 
     // Create new user
+    const isPartner = role === 'partner';
     const user = new User({
       name,
       email,
       password,
       phone,
-      role: role || 'user'
+      role: role || 'user',
+      approved: !isPartner // partners require admin approval
     });
 
     await user.save();
@@ -83,14 +86,17 @@ router.post('/register', validateRegister, handleValidation, async (req, res) =>
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: isPartner
+        ? 'Partner account created. Awaiting admin approval.'
+        : 'User registered successfully',
       data: {
         user: {
           id: user._id,
           name: user.name,
           email: user.email,
           phone: user.phone,
-          role: user.role
+          role: user.role,
+          approved: user.approved
         },
         token
       }
@@ -143,6 +149,7 @@ router.post('/login', validateLogin, handleValidation, async (req, res) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          approved: user.approved,
           avatar: user.avatar,
           preferences: user.preferences
         },
@@ -269,10 +276,28 @@ router.post('/verify-token', auth, (req, res) => {
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
-        role: req.user.role
+        phone: req.user.phone,
+        role: req.user.role,
+        approved: req.user.approved
       }
     }
   });
 });
+
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset email
+// @access  Public
+router.post('/forgot-password', authController.forgotPassword);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset user password via token
+// @access  Public
+router.post('/reset-password', authController.resetPassword);
+
+// Admin: List pending partners
+router.get('/partners/pending', auth, authController.listPendingPartners);
+
+// Admin: Approve partner
+router.post('/partners/:id/approve', auth, authController.approvePartner);
 
 module.exports = router;

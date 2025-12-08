@@ -14,7 +14,7 @@ const movieRoutes = require('./routes/movies');
 const theaterRoutes = require('./routes/theaters');
 const showRoutes = require('./routes/shows');
 const bookingRoutes = require('./routes/bookings');
-const paymentRoutes = require('./routes/payments');
+const paymentRoutes = require('./routes/payment');
 
 const app = express();
 const httpServer = createServer(app);
@@ -120,7 +120,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/shows', showRoutes);
 app.use('/api/bookings', bookingRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

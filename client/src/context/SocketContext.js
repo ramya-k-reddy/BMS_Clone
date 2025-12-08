@@ -35,13 +35,11 @@ export const SocketProvider = ({ children }) => {
       newSocket.on('connect', () => {
         console.log('Connected to socket server');
         setIsConnected(true);
-        toast.success('Connected to live updates');
       });
 
       newSocket.on('disconnect', () => {
         console.log('Disconnected from socket server');
         setIsConnected(false);
-        toast.error('Disconnected from live updates');
       });
 
       newSocket.on('connect_error', (error) => {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { selectIsAdmin, selectUser } from '../store/slices/authSlice';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
 import '../styles/Admin.css';
@@ -9,74 +10,45 @@ import '../styles/Admin.css';
 const AdminTheaters = () => {
   const isAdmin = useSelector(selectIsAdmin);
   const user = useSelector(selectUser);
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    // Load theaters - replace with actual API call
     const loadTheaters = async () => {
       try {
-        // Mock data - replace with actual API
-        setTimeout(() => {
-          setTheaters([
-            {
-              _id: '1',
-              name: 'PVR Cinemas',
-              location: 'Mumbai, Maharashtra',
-              address: '123 Mall Road, Mumbai 400001',
-              capacity: 250,
-              screens: 8,
-              facilities: ['IMAX', 'Dolby Atmos', '4DX'],
-              isVerified: true,
-              status: 'active',
-              owner: {
-                name: 'John Doe',
-                email: 'john@pvr.com'
-              }
-            },
-            {
-              _id: '2',
-              name: 'INOX Multiplex',
-              location: 'Delhi, NCR',
-              address: '456 Central Plaza, Delhi 110001',
-              capacity: 180,
-              screens: 6,
-              facilities: ['IMAX', 'Dolby Atmos'],
-              isVerified: true,
-              status: 'active',
-              owner: {
-                name: 'Jane Smith',
-                email: 'jane@inox.com'
-              }
-            },
-            {
-              _id: '3',
-              name: 'Fun Cinemas',
-              location: 'Bangalore, Karnataka',
-              address: '789 Tech Park, Bangalore 560001',
-              capacity: 120,
-              screens: 4,
-              facilities: ['Dolby Atmos'],
-              isVerified: false,
-              status: 'pending',
-              owner: {
-                name: 'Mike Johnson',
-                email: 'mike@funcinemas.com'
-              }
-            }
-          ]);
-          setLoading(false);
-        }, 1000);
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        const response = await axios.get('/api/theaters', {
+          params: { limit: 50 },
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (response.data.success) {
+          const theatersData = response.data.data.theaters || [];
+          setTheaters(theatersData);
+        }
       } catch (error) {
         console.error('Error loading theaters:', error);
+        alert('Failed to load theaters. Please try refreshing the page.');
+      } finally {
         setLoading(false);
       }
     };
 
     loadTheaters();
-  }, []);
+  }, [refreshTrigger]);
+
+  useEffect(() => {
+    if (location.state?.reload) {
+      setRefreshTrigger(prev => prev + 1);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -85,45 +57,65 @@ const AdminTheaters = () => {
   const handleDeleteTheater = async (theaterId) => {
     if (window.confirm('Are you sure you want to delete this theater?')) {
       try {
-        // Implement delete API call
+        const token = localStorage.getItem('token');
+        await axios.delete(`/api/theaters/${theaterId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
         setTheaters(theaters.filter(theater => theater._id !== theaterId));
-        console.log('Theater deleted:', theaterId);
+        alert('Theater deleted successfully!');
       } catch (error) {
         console.error('Error deleting theater:', error);
+        alert('Failed to delete theater. Please try again.');
       }
     }
   };
 
   const handleVerifyTheater = async (theaterId) => {
     try {
-      // Implement verify API call
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/theaters/${theaterId}`, 
+        { verificationStatus: 'verified', isActive: true },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
       setTheaters(theaters.map(theater => 
         theater._id === theaterId 
-          ? { ...theater, isVerified: true, status: 'active' }
+          ? { ...theater, verificationStatus: 'verified', isActive: true }
           : theater
       ));
+      alert('Theater verified successfully!');
     } catch (error) {
       console.error('Error verifying theater:', error);
+      alert('Failed to verify theater. Please try again.');
     }
   };
 
   const handleToggleStatus = async (theaterId) => {
+    const theater = theaters.find(t => t._id === theaterId);
+    const newStatus = !theater.isActive;
+    
     try {
-      // Implement toggle status API call
-      setTheaters(theaters.map(theater => 
-        theater._id === theaterId 
-          ? { ...theater, status: theater.status === 'active' ? 'inactive' : 'active' }
-          : theater
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/theaters/${theaterId}`,
+        { isActive: newStatus },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      setTheaters(theaters.map(t => 
+        t._id === theaterId ? { ...t, isActive: newStatus } : t
       ));
+      alert(`Theater ${newStatus ? 'activated' : 'deactivated'} successfully!`);
     } catch (error) {
       console.error('Error toggling theater status:', error);
+      alert('Failed to update theater status. Please try again.');
     }
   };
 
   const filteredTheaters = theaters.filter(theater =>
-    theater.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theater.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    theater.owner.name.toLowerCase().includes(searchTerm.toLowerCase())
+    theater.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    theater.address?.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    theater.owner?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Redirect if not admin
@@ -184,32 +176,33 @@ const AdminTheaters = () => {
                       {filteredTheaters.map((theater) => (
                         <tr key={theater._id}>
                           <td className="table-cell-bold">{theater.name}</td>
-                          <td>{theater.location}</td>
-                          <td className="text-center">{theater.screens}</td>
-                          <td className="text-center">{theater.capacity}</td>
+                          <td>{theater.address?.city}, {theater.address?.state}</td>
+                          <td className="text-center">{theater.screens?.length || 0}</td>
+                          <td className="text-center">{theater.screens?.reduce((sum, s) => sum + (s.capacity || 0), 0) || 0}</td>
                           <td>
                             <div className="facilities-container">
-                              {theater.facilities.map((facility, index) => (
+                              {theater.amenities?.slice(0, 3).map((amenity, index) => (
                                 <span key={index} className="facility-badge">
-                                  {facility}
+                                  {amenity}
                                 </span>
                               ))}
+                              {theater.amenities?.length > 3 && <span className="facility-badge">+{theater.amenities.length - 3}</span>}
                             </div>
                           </td>
                           <td>
                             <div className="owner-info">
-                              <div className="owner-name">{theater.owner.name}</div>
-                              <div className="owner-email">{theater.owner.email}</div>
+                              <div className="owner-name">{theater.owner?.name || 'N/A'}</div>
+                              <div className="owner-email">{theater.owner?.email || 'N/A'}</div>
                             </div>
                           </td>
                           <td>
-                            <span className={`status-badge ${theater.isVerified ? 'active' : 'pending'}`}>
-                              {theater.isVerified ? '✅ Verified' : '⏳ Pending'}
+                            <span className={`status-badge ${theater.verificationStatus === 'verified' ? 'active' : 'pending'}`}>
+                              {theater.verificationStatus === 'verified' ? '✅ Verified' : '⏳ Pending'}
                             </span>
                           </td>
                           <td>
-                            <span className={`status-badge ${theater.status}`}>
-                              {theater.status}
+                            <span className={`status-badge ${theater.isActive ? 'active' : 'inactive'}`}>
+                              {theater.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </td>
                           <td>
@@ -220,7 +213,7 @@ const AdminTheaters = () => {
                               >
                                 ✏️ Edit
                               </Link>
-                              {!theater.isVerified && (
+                              {theater.verificationStatus !== 'verified' && (
                                 <button 
                                   onClick={() => handleVerifyTheater(theater._id)}
                                   className="action-btn-verify"
@@ -232,7 +225,7 @@ const AdminTheaters = () => {
                                 onClick={() => handleToggleStatus(theater._id)}
                                 className="action-btn-toggle"
                               >
-                                {theater.status === 'active' ? '⏸️' : '▶️'}
+                                {theater.isActive ? '⏸️' : '▶️'}
                               </button>
                               <button 
                                 onClick={() => handleDeleteTheater(theater._id)}
@@ -265,17 +258,17 @@ const AdminTheaters = () => {
               </div>
               <div className="stat-card">
                 <div className="stat-icon">✅</div>
-                <div className="stat-value">{theaters.filter(t => t.isVerified).length}</div>
+                <div className="stat-value">{theaters.filter(t => t.verificationStatus === 'verified').length}</div>
                 <div className="stat-label">Verified Theaters</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">⏳</div>
-                <div className="stat-value">{theaters.filter(t => !t.isVerified).length}</div>
+                <div className="stat-value">{theaters.filter(t => t.verificationStatus !== 'verified').length}</div>
                 <div className="stat-label">Pending Verification</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">🎬</div>
-                <div className="stat-value">{theaters.reduce((total, t) => total + t.screens, 0)}</div>
+                <div className="stat-value">{theaters.reduce((total, t) => total + (t.screens?.length || 0), 0)}</div>
                 <div className="stat-label">Total Screens</div>
               </div>
             </div>

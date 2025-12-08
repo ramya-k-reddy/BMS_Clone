@@ -145,6 +145,24 @@ export const paymentAPI = {
   getPaymentMethods: () => api.get('/payments/payment-methods'),
 };
 
+// Request password reset link
+export const forgotPassword = async (email) => {
+  return fetch('/api/auth/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  }).then(res => res.json());
+};
+
+// Reset password using token
+export const resetPassword = async (token, password) => {
+  return fetch('/api/auth/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password })
+  }).then(res => res.json());
+};
+
 // Health check
 export const healthAPI = {
   check: () => api.get('/health'),

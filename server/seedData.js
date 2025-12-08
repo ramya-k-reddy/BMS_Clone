@@ -22,7 +22,8 @@ const demoUsers = [
     email: 'owner@theater.com',
     password: 'owner123',
     phone: '9876543211',
-    role: 'theater-owner'
+    role: 'partner',
+    approved: false
   },
   {
     name: 'John Doe',
@@ -113,6 +114,231 @@ const demoMovies = [
     certification: 'U/A',
     format: ['2D', '3D', 'IMAX'],
     status: 'coming-soon'
+  },
+  {
+    title: 'Oppenheimer',
+    description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
+    genre: ['Biography', 'Drama', 'History'],
+    language: ['English', 'Hindi'],
+    duration: 180,
+    releaseDate: new Date('2024-01-25'),
+    director: 'Christopher Nolan',
+    cast: [
+      { name: 'Cillian Murphy', role: 'J. Robert Oppenheimer', image: '' },
+      { name: 'Emily Blunt', role: 'Katherine Oppenheimer', image: '' },
+      { name: 'Robert Downey Jr.', role: 'Lewis Strauss', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=uYPbbksJxIg',
+    rating: {
+      imdb: 8.3,
+      userRating: 4.6,
+      totalRatings: 450
+    },
+    certification: 'A',
+    format: ['2D', 'IMAX'],
+    status: 'now-showing'
+  },
+  {
+    title: 'The Dark Knight',
+    description: 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological tests of his ability to fight injustice.',
+    genre: ['Action', 'Crime', 'Drama'],
+    language: ['English', 'Hindi', 'Tamil'],
+    duration: 152,
+    releaseDate: new Date('2024-02-05'),
+    director: 'Christopher Nolan',
+    cast: [
+      { name: 'Christian Bale', role: 'Bruce Wayne / Batman', image: '' },
+      { name: 'Heath Ledger', role: 'Joker', image: '' },
+      { name: 'Aaron Eckhart', role: 'Harvey Dent', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/hqkIcbrOHL86UncnHIsHVcVmzue.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=EXeTwQWrcwY',
+    rating: {
+      imdb: 9.0,
+      userRating: 4.8,
+      totalRatings: 680
+    },
+    certification: 'U/A',
+    format: ['2D', 'IMAX'],
+    status: 'now-showing'
+  },
+  {
+    title: 'Inception',
+    description: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+    genre: ['Action', 'Sci-Fi', 'Thriller'],
+    language: ['English', 'Hindi'],
+    duration: 148,
+    releaseDate: new Date('2024-01-28'),
+    director: 'Christopher Nolan',
+    cast: [
+      { name: 'Leonardo DiCaprio', role: 'Cobb', image: '' },
+      { name: 'Joseph Gordon-Levitt', role: 'Arthur', image: '' },
+      { name: 'Elliot Page', role: 'Ariadne', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/s3TBrRGB1iav7gFOCNx3H31MoES.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=YoHD9XEInc0',
+    rating: {
+      imdb: 8.8,
+      userRating: 4.7,
+      totalRatings: 590
+    },
+    certification: 'U/A',
+    format: ['2D', 'IMAX'],
+    status: 'now-showing'
+  },
+  {
+    title: 'Interstellar',
+    description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
+    genre: ['Adventure', 'Drama', 'Sci-Fi'],
+    language: ['English', 'Hindi'],
+    duration: 169,
+    releaseDate: new Date('2024-02-10'),
+    director: 'Christopher Nolan',
+    cast: [
+      { name: 'Matthew McConaughey', role: 'Cooper', image: '' },
+      { name: 'Anne Hathaway', role: 'Brand', image: '' },
+      { name: 'Jessica Chastain', role: 'Murph', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/xu9zaAevzQ5nnrsXN6JcahLnG4i.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=zSWdZVtXT7E',
+    rating: {
+      imdb: 8.7,
+      userRating: 4.6,
+      totalRatings: 520
+    },
+    certification: 'U/A',
+    format: ['2D', 'IMAX'],
+    status: 'coming-soon'
+  },
+  {
+    title: 'Dune: Part Two',
+    description: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
+    genre: ['Action', 'Adventure', 'Sci-Fi'],
+    language: ['English', 'Hindi'],
+    duration: 166,
+    releaseDate: new Date('2024-02-15'),
+    director: 'Denis Villeneuve',
+    cast: [
+      { name: 'Timothée Chalamet', role: 'Paul Atreides', image: '' },
+      { name: 'Zendaya', role: 'Chani', image: '' },
+      { name: 'Rebecca Ferguson', role: 'Lady Jessica', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=Way9Dexny3w',
+    rating: {
+      imdb: 8.5,
+      userRating: 4.7,
+      totalRatings: 380
+    },
+    certification: 'U/A',
+    format: ['2D', '3D', 'IMAX'],
+    status: 'coming-soon'
+  },
+  {
+    title: 'Pathaan',
+    description: 'An Indian spy takes on the leader of a gang of mercenaries who have nefarious plans to target his homeland.',
+    genre: ['Action', 'Thriller'],
+    language: ['Hindi', 'English', 'Tamil'],
+    duration: 146,
+    releaseDate: new Date('2024-01-22'),
+    director: 'Siddharth Anand',
+    cast: [
+      { name: 'Shah Rukh Khan', role: 'Pathaan', image: '' },
+      { name: 'Deepika Padukone', role: 'Rubina', image: '' },
+      { name: 'John Abraham', role: 'Jim', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/kTOheVmqSBDIRGrQLv2SiSc89os.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/5LBMmBKGdgKR4vgHf6aoELquo7U.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=vqu4z34wENw',
+    rating: {
+      imdb: 5.7,
+      userRating: 4.2,
+      totalRatings: 280
+    },
+    certification: 'U/A',
+    format: ['2D', '3D', 'IMAX'],
+    status: 'now-showing'
+  },
+  {
+    title: 'Jawan',
+    description: 'A high-octane action thriller which outlines the emotional journey of a man who is set to rectify the wrongs in society.',
+    genre: ['Action', 'Thriller'],
+    language: ['Hindi', 'Tamil', 'Telugu'],
+    duration: 169,
+    releaseDate: new Date('2024-02-08'),
+    director: 'Atlee',
+    cast: [
+      { name: 'Shah Rukh Khan', role: 'Azad / Vikram Rathore', image: '' },
+      { name: 'Nayanthara', role: 'Narmada', image: '' },
+      { name: 'Vijay Sethupathi', role: 'Kalee', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/aGVWVNRqKBZ2tP1rKXt2IiI0KWn.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/3mS6RqrqmYNq9bEgITZmfOfjGpq.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=CEEjr07CDY0',
+    rating: {
+      imdb: 6.5,
+      userRating: 4.4,
+      totalRatings: 340
+    },
+    certification: 'U/A',
+    format: ['2D', '3D', 'IMAX'],
+    status: 'now-showing'
+  },
+  {
+    title: 'Guardians of the Galaxy Vol. 3',
+    description: 'Still reeling from the loss of Gamora, Peter Quill rallies his team to defend the universe and one of their own.',
+    genre: ['Action', 'Adventure', 'Comedy'],
+    language: ['English', 'Hindi'],
+    duration: 150,
+    releaseDate: new Date('2024-02-12'),
+    director: 'James Gunn',
+    cast: [
+      { name: 'Chris Pratt', role: 'Peter Quill / Star-Lord', image: '' },
+      { name: 'Zoe Saldana', role: 'Gamora', image: '' },
+      { name: 'Dave Bautista', role: 'Drax', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/r2J02Z2OpNTctfOSN1Ydgii51I3.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=u3V5KDHRQvk',
+    rating: {
+      imdb: 7.9,
+      userRating: 4.5,
+      totalRatings: 410
+    },
+    certification: 'U/A',
+    format: ['2D', '3D', 'IMAX'],
+    status: 'coming-soon'
+  },
+  {
+    title: 'The Shawshank Redemption',
+    description: 'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
+    genre: ['Drama'],
+    language: ['English', 'Hindi'],
+    duration: 142,
+    releaseDate: new Date('2024-01-30'),
+    director: 'Frank Darabont',
+    cast: [
+      { name: 'Tim Robbins', role: 'Andy Dufresne', image: '' },
+      { name: 'Morgan Freeman', role: 'Ellis Boyd Redding', image: '' },
+      { name: 'Bob Gunton', role: 'Warden Norton', image: '' }
+    ],
+    poster: 'https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg',
+    bannerImage: 'https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/kXfqcdQKsToO0OUXHcrrNCHDBzO.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=6hB3S9bIaco',
+    rating: {
+      imdb: 9.3,
+      userRating: 4.9,
+      totalRatings: 720
+    },
+    certification: 'A',
+    format: ['2D'],
+    status: 'now-showing'
   }
 ];
 
@@ -151,7 +377,7 @@ async function seedDatabase() {
     console.log('Created demo movies');
 
     // Create a demo theater
-    const theaterOwner = users.find(user => user.role === 'theater-owner');
+    const theaterOwner = users.find(user => user.role === 'partner');
     
     const demoTheater = {
       name: 'PVR Cinemas Phoenix Mall',
@@ -319,7 +545,7 @@ async function seedDatabase() {
     
     console.log('\n🔐 Login Credentials:');
     console.log('Admin: admin@bookmyshow.com / admin123');
-    console.log('Theater Owner: owner@theater.com / owner123');
+    console.log('Partner: owner@theater.com / owner123');
     console.log('User: john@example.com / user123');
 
   } catch (error) {

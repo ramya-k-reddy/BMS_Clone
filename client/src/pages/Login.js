@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../store/slices/authSlice';
-import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin } from '../store/slices/authSlice';
+import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin, selectIsPartner, selectIsApprovedPartner, selectIsPendingPartner, selectUser } from '../store/slices/authSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import '../styles/Login.css';
 
@@ -14,6 +14,12 @@ const Login = () => {
   const error = useSelector(selectAuthError);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isAdmin = useSelector(selectIsAdmin);
+  const isApprovedPartner = useSelector(selectIsApprovedPartner);
+  const isPendingPartner = useSelector(selectIsPendingPartner);
+  const user = useSelector(selectUser);
+
+  // Debug log to track component renders and state changes
+  // console.log('Login render - user:', user, 'isAuthenticated:', isAuthenticated, 'isAdmin:', isAdmin, 'isPartner:', isPartner);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -25,15 +31,24 @@ const Login = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('useEffect redirect - isAdmin:', isAdmin, 'isPendingPartner:', isPendingPartner, 'isApprovedPartner:', isApprovedPartner); // Debug log
       if (from && from !== '/') {
         navigate(from, { replace: true });
       } else if (isAdmin) {
+        console.log('useEffect: Redirecting to admin'); // Debug log
         navigate('/admin', { replace: true });
+      } else if (isPendingPartner) {
+        console.log('useEffect: Redirecting to pending approval'); // Debug log
+        navigate('/partner/pending-approval', { replace: true });
+      } else if (isApprovedPartner) {
+        console.log('useEffect: Redirecting to partner shows'); // Debug log
+        navigate('/partner/shows', { replace: true });
       } else {
+        console.log('useEffect: Redirecting to movies'); // Debug log
         navigate('/movies', { replace: true });
       }
     }
-  }, [isAuthenticated, isAdmin, from, navigate]);
+  }, [isAuthenticated, isAdmin, isPendingPartner, isApprovedPartner, from, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -48,6 +63,7 @@ const Login = () => {
     
     if (loginUser.fulfilled.match(result)) {
       const user = result.payload.user;
+      console.log('Login successful, user role:', user.role); // Debug log
       
       // If there's a return URL and it's not the home page, use it
       if (from && from !== '/') {
@@ -55,8 +71,18 @@ const Login = () => {
       } else {
         // Redirect based on user role
         if (user.role === 'admin') {
+          console.log('Redirecting to admin dashboard'); // Debug log
           navigate('/admin', { replace: true });
+        } else if (user.role === 'partner') {
+          if (user.approved === false) {
+            console.log('Redirecting to pending approval'); // Debug log
+            navigate('/partner/pending-approval', { replace: true });
+          } else {
+            console.log('Redirecting to partner shows'); // Debug log
+            navigate('/partner/shows', { replace: true });
+          }
         } else {
+          console.log('Redirecting to movies'); // Debug log
           navigate('/movies', { replace: true });
         }
       }
@@ -123,15 +149,13 @@ const Login = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <button 
-                type="button" 
-                className="forgot-password"
-                onClick={() => alert('Forgot password functionality coming soon!')}
-              >
-                Forgot your password?
-              </button>
-            </div>
+            {/* Removed duplicate 'Forgot your password?' button */}
+          </div>
+
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <a href="/forgot-password" style={{ color: '#2563eb', textDecoration: 'underline', fontWeight: 500 }}>
+              Forgot Password?
+            </a>
           </div>
 
           <div>

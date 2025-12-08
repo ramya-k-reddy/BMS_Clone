@@ -18,7 +18,7 @@ const AdminSidebar = ({ collapsed }) => {
       items: [
         { path: '/admin/movies', label: 'Movies', icon: '🎬' },
         { path: '/admin/theaters', label: 'Theaters', icon: '🎭' },
-        { path: '/admin/shows', label: 'Shows', icon: '🎟️' },
+        // { path: '/admin/shows', label: 'Shows', icon: '🎟️' },
       ]
     }
   ];
