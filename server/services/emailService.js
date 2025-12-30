@@ -3,33 +3,68 @@ const QRCode = require('qrcode');
 const twilio = require('twilio');
 
 // Create email transporter with better error handling
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS?.replace(/\s+/g, '') // Remove any spaces from app password
-  },
-  tls: {
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2'
-  },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-  socketTimeout: 15000
-});
+let transporter;
 
-// Verify transporter configuration on startup
-transporter.verify(function(error, success) {
-  if (error) {
-    console.log('❌ Email transporter verification failed:', error.message);
-    console.log('⚠️ Please check your EMAIL_USER and EMAIL_PASS in .env file');
-  } else {
-    console.log('✅ Email server is ready to send messages');
-  }
-});
+// Check if using real Gmail or test account
+const isRealEmail = process.env.EMAIL_USER && 
+                   process.env.EMAIL_USER !== 'your-email@gmail.com' &&
+                   process.env.EMAIL_PASS &&
+                   process.env.EMAIL_PASS !== 'your-app-password';
+
+if (isRealEmail) {
+  // Use real Gmail configuration
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS?.replace(/\s+/g, '')
+    },
+    tls: {
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2'
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
+  });
+
+  // Verify transporter configuration
+  transporter.verify(function(error, success) {
+    if (error) {
+      console.log('❌ Email transporter verification failed:', error.message);
+      console.log('⚠️ Please check your EMAIL_USER and EMAIL_PASS in .env file');
+    } else {
+      console.log('✅ Email server is ready to send messages');
+      console.log(`📧 Using Gmail: ${process.env.EMAIL_USER}`);
+    }
+  });
+} else {
+  // Use Ethereal test account (automatic test email service)
+  nodemailer.createTestAccount((err, account) => {
+    if (err) {
+      console.error('❌ Failed to create test email account:', err);
+      return;
+    }
+
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: account.user,
+        pass: account.pass
+      }
+    });
+
+    console.log('✅ Email service ready (Using test account)');
+    console.log('📧 Test Email Account:', account.user);
+    console.log('🔗 View emails at: https://ethereal.email/messages');
+    console.log('💡 Configure real Gmail in .env to send actual emails');
+  });
+}
 
 // Initialize Twilio client for SMS
 let twilioClient = null;
@@ -440,6 +475,12 @@ const sendBookingConfirmation = async (booking, show, movie, theater) => {
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Booking confirmation email sent:', info.messageId);
     
+    // If using test account, log preview URL
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('📧 Preview email: ' + previewUrl);
+    }
+    
     // Send SMS notification if phone number is available
     const phoneNumber = booking.contactDetails?.phone || booking.user?.phone;
     if (phoneNumber) {
@@ -509,14 +550,123 @@ const sendBookingCancellation = async (booking, reason = 'Payment timeout') => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
     console.log('✅ Cancellation email sent for booking:', booking.bookingId);
+    
+    // If using test account, log preview URL
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('📧 Preview email: ' + previewUrl);
+    }
   } catch (error) {
     console.error('❌ Error sending cancellation email:', error);
   }
 };
 
+// General send email function for forgot password and other purposes
+const sendEmail = async ({ to, subject, text, html }) => {
+  try {
+    // Wait for transporter to be initialized if using test account
+    if (!transporter) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    if (!transporter) {
+      throw new Error('Email transporter not initialized');
+    }
+
+    const mailOptions = {
+      from: `"BookMyShow" <${process.env.EMAIL_USER || 'noreply@bookmyshow.com'}>`,
+      to,
+      subject,
+      text,
+      html: html || `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              line-height: 1.6; 
+              color: #333; 
+              background: #f5f5f5;
+              margin: 0;
+              padding: 0;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 20px auto; 
+              background: white;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
+            .header { 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; 
+              padding: 30px; 
+              text-align: center; 
+            }
+            .header h1 { margin: 0; font-size: 28px; }
+            .content { 
+              padding: 30px; 
+              background: white; 
+            }
+            .content p { margin: 15px 0; line-height: 1.8; }
+            .button {
+              display: inline-block;
+              padding: 12px 30px;
+              margin: 20px 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              text-decoration: none;
+              border-radius: 5px;
+              font-weight: bold;
+            }
+            .footer { 
+              text-align: center; 
+              color: #666; 
+              font-size: 12px; 
+              padding: 20px;
+              background: #f9fafb;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🎬 BookMyShow</h1>
+            </div>
+            <div class="content">
+              ${text.split('\n').map(line => `<p>${line}</p>`).join('')}
+            </div>
+            <div class="footer">
+              <p>&copy; 2025 BookMyShow. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent:', info.messageId);
+    
+    // If using test account, log preview URL
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('📧 Preview email: ' + previewUrl);
+    }
+    
+    return { success: true, messageId: info.messageId, previewUrl };
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
+  sendEmail,
   sendBookingConfirmation,
   sendBookingCancellation,
   sendBookingSMS
