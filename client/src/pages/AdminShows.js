@@ -57,6 +57,7 @@ const AdminShows = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('all');
   const [filterTheater, setFilterTheater] = useState('all');
+  const [selectedTheaterScreens, setSelectedTheaterScreens] = useState([]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -133,6 +134,7 @@ const AdminShows = () => {
 
       const token = localStorage.getItem('token');
       const selectedScreen = selectedTheaterScreens.find(s => s.screenNumber === parseInt(formData.screen));
+      console.log(setSelectedTheaterScreens);
       
       if (!selectedScreen) {
         alert('Please select a valid screen');
