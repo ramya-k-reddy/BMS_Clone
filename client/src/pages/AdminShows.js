@@ -53,7 +53,6 @@ const AdminShows = () => {
   const [shows, setShows] = useState([]);
   const [movies, setMovies] = useState([]);
   const [theaters, setTheaters] = useState([]);
-  const [selectedTheaterScreens, setSelectedTheaterScreens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('all');

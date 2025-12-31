@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../store/slices/authSlice';
-import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin, selectIsPartner, selectIsApprovedPartner, selectIsPendingPartner } from '../store/slices/authSlice';
+import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin, selectIsApprovedPartner, selectIsPendingPartner } from '../store/slices/authSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import '../styles/Register.css';
 

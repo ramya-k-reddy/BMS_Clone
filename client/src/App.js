@@ -3,8 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './store';
-import { verifyToken, setInitialized } from './store/slices/authSlice';
-import { selectIsInitialized, selectAuthLoading, selectIsAuthenticated, selectIsAdmin, selectIsPartner, selectIsApprovedPartner, selectIsPendingPartner, selectUser } from './store/slices/authSlice';
+import { verifyToken,setInitialized, selectIsInitialized, selectAuthLoading, selectIsAuthenticated, selectIsAdmin, selectIsApprovedPartner, selectIsPendingPartner, selectUser } from './store/slices/authSlice';
 
 // Context Providers (for Socket.IO)
 import { SocketProvider } from './context/SocketContext';

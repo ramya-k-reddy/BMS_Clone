@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../store/slices/authSlice';
-import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin, selectIsPartner, selectIsApprovedPartner, selectIsPendingPartner, selectUser } from '../store/slices/authSlice';
+import { selectAuthLoading, selectAuthError, selectIsAuthenticated, selectIsAdmin, selectIsApprovedPartner, selectIsPendingPartner } from '../store/slices/authSlice';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import '../styles/Login.css';
 
@@ -16,10 +16,9 @@ const Login = () => {
   const isAdmin = useSelector(selectIsAdmin);
   const isApprovedPartner = useSelector(selectIsApprovedPartner);
   const isPendingPartner = useSelector(selectIsPendingPartner);
-  const user = useSelector(selectUser);
 
   // Debug log to track component renders and state changes
-  // console.log('Login render - user:', user, 'isAuthenticated:', isAuthenticated, 'isAdmin:', isAdmin, 'isPartner:', isPartner);
+  // console.log('Login render - isAuthenticated:', isAuthenticated, 'isAdmin:', isAdmin);
 
   const [formData, setFormData] = useState({
     email: '',
